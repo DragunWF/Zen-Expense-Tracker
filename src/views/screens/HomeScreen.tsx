@@ -102,11 +102,15 @@ function formatAmount(value: number): string {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Screen Component
-// ---------------------------------------------------------------------------
+export interface HomeScreenProps {
+  modalVisible?: boolean;
+  setModalVisible?: (visible: boolean) => void;
+}
 
-export default function HomeScreen() {
+export default function HomeScreen({
+  modalVisible: externalModalVisible,
+  setModalVisible: externalSetModalVisible,
+}: HomeScreenProps = {}) {
   // ── Dashboard aggregates ──────────────────────────────────────────────────
   const [totalIncome, setTotalIncome] = useState<number>(15000);
   const [totalExpenses, setTotalExpenses] = useState<number>(5000);
@@ -114,7 +118,17 @@ export default function HomeScreen() {
     useState<MockTransaction[]>(INITIAL_TRANSACTIONS);
 
   // ── Modal visibility & step ───────────────────────────────────────────────
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [localModalVisible, setLocalModalVisible] = useState<boolean>(false);
+  const isControlledModal =
+    externalModalVisible !== undefined && externalSetModalVisible !== undefined;
+
+  const modalVisible = isControlledModal
+    ? externalModalVisible
+    : localModalVisible;
+  const setModalVisible = isControlledModal
+    ? externalSetModalVisible
+    : setLocalModalVisible;
+
   const [modalStep, setModalStep] = useState<1 | 2>(1);
 
   // ── Step 1: amount & type ─────────────────────────────────────────────────
@@ -338,15 +352,7 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
 
-        {/* ── FAB ──────────────────────────────────────────────────────────── */}
-        <Pressable
-          onPress={openModal}
-          className="absolute bottom-24 right-10 h-14 w-14 rounded-full bg-slate-950 border border-slate-800/80 active:bg-slate-900 items-center justify-center shadow-lg shadow-black/50"
-        >
-          <Text className="text-emerald-500 text-4xl font-light leading-none mt-[-2px]">
-            +
-          </Text>
-        </Pressable>
+
       </View>
 
       {/* ─── Two-Step Modal Overlay ─────────────────────────────────────────── */}

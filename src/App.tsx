@@ -8,11 +8,26 @@ import TabBar from "./views/navigation/TabBar";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>("Home");
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+
+  const handleAddPress = () => {
+    if (activeTab === "Home") {
+      setIsAddModalOpen(true);
+    } else if (activeTab === "Ledger") {
+      setActiveTab("Home");
+      setIsAddModalOpen(true);
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
       case "Home":
-        return <HomeScreen />;
+        return (
+          <HomeScreen
+            modalVisible={isAddModalOpen}
+            setModalVisible={setIsAddModalOpen}
+          />
+        );
       case "Ledger":
         return (
           <SafeAreaView className="flex-1 bg-slate-900 justify-center items-center px-6">
@@ -65,7 +80,12 @@ export default function App() {
           </SafeAreaView>
         );
       default:
-        return <HomeScreen />;
+        return (
+          <HomeScreen
+            modalVisible={isAddModalOpen}
+            setModalVisible={setIsAddModalOpen}
+          />
+        );
     }
   };
 
@@ -73,7 +93,11 @@ export default function App() {
     <SafeAreaProvider>
       <View className="flex-1 bg-slate-900">
         {renderContent()}
-        <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabBar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onAddPress={handleAddPress}
+        />
         <StatusBar style="light" />
       </View>
     </SafeAreaProvider>
