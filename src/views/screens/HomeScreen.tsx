@@ -341,7 +341,7 @@ export default function HomeScreen() {
         {/* ── FAB ──────────────────────────────────────────────────────────── */}
         <Pressable
           onPress={openModal}
-          className="absolute bottom-6 right-5 h-14 w-14 rounded-full bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg"
+          className="absolute bottom-24 right-5 h-14 w-14 rounded-full bg-emerald-500 active:bg-emerald-600 items-center justify-center shadow-lg"
         >
           <Text className="text-slate-900 text-3xl font-light leading-none mt-[-2px]">
             +

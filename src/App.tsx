@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./core/global.css";
 import { StatusBar } from "expo-status-bar";
 import { View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import HomeScreen from "./views/screens/HomeScreen";
 import TabBar from "./views/navigation/TabBar";
 
@@ -70,10 +70,12 @@ export default function App() {
   };
 
   return (
-    <View className="flex-1 bg-slate-900">
-      {renderContent()}
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <StatusBar style="light" />
-    </View>
+    <SafeAreaProvider>
+      <View className="flex-1 bg-slate-900">
+        {renderContent()}
+        <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+        <StatusBar style="light" />
+      </View>
+    </SafeAreaProvider>
   );
 }
