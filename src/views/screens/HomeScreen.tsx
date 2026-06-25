@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -130,6 +130,16 @@ export default function HomeScreen({
     : setLocalModalVisible;
 
   const [modalStep, setModalStep] = useState<1 | 2>(1);
+
+  // Reset modal input states when opened
+  useEffect(() => {
+    if (modalVisible) {
+      setAmount("");
+      setModalStep(1);
+      setShowNewCatInput(false);
+      setNewCategoryName("");
+    }
+  }, [modalVisible]);
 
   // ── Step 1: amount & type ─────────────────────────────────────────────────
   const [amount, setAmount] = useState<string>("");
@@ -351,8 +361,6 @@ export default function HomeScreen({
             </View>
           </View>
         </ScrollView>
-
-
       </View>
 
       {/* ─── Two-Step Modal Overlay ─────────────────────────────────────────── */}

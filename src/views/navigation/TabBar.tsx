@@ -53,7 +53,8 @@ export default function TabBar({
   ];
 
   // Check if center FAB should be disabled (active ONLY for Home and Ledger)
-  const isFabDisabled = activeTabName === "Stats" || activeTabName === "Settings";
+  const isFabDisabled =
+    activeTabName === "Stats" || activeTabName === "Settings";
 
   const handleTabPress = (tabName: string) => {
     if (isNavigationMode) {
@@ -115,14 +116,32 @@ export default function TabBar({
   };
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 w-full rounded-t-3xl bg-slate-950 border-t border-slate-900 px-6 pt-3 pb-6 flex-row items-center justify-between shadow-2xl shadow-black/50 z-40">
-      {/* Left side navigation items */}
-      <View className="flex-1 flex-row justify-around">
-        {leftTabs.map(renderTabButton)}
+    <View
+      pointerEvents="box-none"
+      className="absolute bottom-0 left-0 right-0 w-full bg-transparent z-40"
+    >
+      {/* Tab Bar Background & Row */}
+      <View className="w-full rounded-t-3xl bg-slate-950 border-t border-slate-900 px-6 pt-3 pb-6 flex-row items-center justify-between shadow-2xl shadow-black/50">
+        {/* Left side navigation items */}
+        <View className="flex-1 flex-row justify-around">
+          {leftTabs.map(renderTabButton)}
+        </View>
+
+        {/* Center placeholder to preserve space for the FAB */}
+        <View className="w-14 h-14" />
+
+        {/* Right side navigation items */}
+        <View className="flex-1 flex-row justify-around">
+          {rightTabs.map(renderTabButton)}
+        </View>
       </View>
 
-      {/* Center Floating Action Button (FAB) */}
-      <View className="items-center justify-center px-4 -mt-9 z-50">
+      {/* Center Floating Action Button (FAB) positioned absolutely */}
+      <View
+        pointerEvents="box-none"
+        className="absolute bottom-12 left-1/2 -ml-7 z-50"
+        style={{ left: "50%" }}
+      >
         <TouchableOpacity
           onPress={onAddPress}
           disabled={isFabDisabled}
@@ -141,11 +160,6 @@ export default function TabBar({
             +
           </Text>
         </TouchableOpacity>
-      </View>
-
-      {/* Right side navigation items */}
-      <View className="flex-1 flex-row justify-around">
-        {rightTabs.map(renderTabButton)}
       </View>
     </View>
   );
