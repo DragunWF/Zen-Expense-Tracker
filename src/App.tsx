@@ -1,12 +1,13 @@
 import "./core/global.css";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
+import HomeScreen from "./views/screens/HomeScreen";
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <HomeScreen />
+      <StatusBar style="light" />
     </View>
   );
 }
