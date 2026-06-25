@@ -114,11 +114,10 @@ export default function TabBar({
       </TouchableOpacity>
     );
   };
-
   return (
     <View
       pointerEvents="box-none"
-      className="absolute bottom-0 left-0 right-0 w-full bg-transparent z-40"
+      className="absolute bottom-0 left-0 right-0 w-full bg-transparent z-40 h-[110px]"
     >
       {/* Tab Bar Background & Row */}
       <View className="w-full rounded-t-3xl bg-slate-950 border-t border-slate-900 px-6 pt-3 pb-6 flex-row items-center justify-between shadow-2xl shadow-black/50">
@@ -139,7 +138,7 @@ export default function TabBar({
       {/* Center Floating Action Button (FAB) positioned absolutely */}
       <View
         pointerEvents="box-none"
-        className="absolute bottom-12 left-1/2 -ml-7 z-50"
+        className="absolute bottom-18 left-1/2 -ml-7 z-50"
         style={{ left: "50%" }}
       >
         <TouchableOpacity
@@ -148,7 +147,7 @@ export default function TabBar({
           activeOpacity={0.8}
           className={`h-14 w-14 rounded-full items-center justify-center shadow-lg shadow-black/40 transition-all duration-300 ${
             isFabDisabled
-              ? "bg-slate-800 pointer-events-none border border-slate-700/50"
+              ? "bg-slate-800 border border-slate-700/50"
               : "bg-emerald-500 active:bg-emerald-600 border border-emerald-400/20"
           }`}
         >
