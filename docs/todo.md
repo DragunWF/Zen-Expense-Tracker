@@ -5,7 +5,12 @@
 - [ ] Balance Display Card
 - [ ] Quick Action Toggles
 - [ ] Quick Add System with Categories
-- [ ] Create Category Modal
+- [ ] Add Transaction Modal
+  - [ ] Date Picker
+  - [ ] Amount Input
+  - [ ] Category Selection
+  - [ ] Type Selection (Income or Expense)
+  - [ ] Notes Input
 
 ## Ledger / Transaction List
 
