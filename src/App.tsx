@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import "./core/global.css";
 import { StatusBar } from "expo-status-bar";
-import { View, Text, Settings } from "react-native";
+import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "./views/screens/HomeScreen";
 import LedgerScreen from "./views/screens/LedgerScreen";
 import SettingsScreen from "./views/screens/SettingsScreen";
@@ -11,70 +13,55 @@ import TabBar from "./views/navigation/TabBar";
 import AddTransactionModal from "./views/components/AddTransactionModal";
 import { useExpenseController } from "./controllers/useExpenseController";
 
+const Tab = createBottomTabNavigator();
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<string>("Home");
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
   // Controller hook providing unified logic and data state
   const controller = useExpenseController();
 
   const handleAddPress = () => {
-    if (activeTab === "Home" || activeTab === "Ledger") {
-      setIsAddModalOpen(true);
-    }
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "Home":
-        return (
-          <HomeScreen
-            transactions={controller.transactions}
-            totalIncome={controller.totalIncome}
-            totalExpenses={controller.totalExpenses}
-          />
-        );
-      case "Ledger":
-        return <LedgerScreen />;
-      case "Stats":
-        return <StatsScreen />;
-      case "Settings":
-        return <SettingsScreen />;
-      default:
-        return (
-          <HomeScreen
-            transactions={controller.transactions}
-            totalIncome={controller.totalIncome}
-            totalExpenses={controller.totalExpenses}
-          />
-        );
-    }
+    setIsAddModalOpen(true);
   };
 
   return (
     <SafeAreaProvider>
-      <View className="flex-1 bg-slate-900">
-        {renderContent()}
+      <NavigationContainer>
+        <View className="flex-1 bg-slate-900">
+          <Tab.Navigator
+            tabBar={(props) => <TabBar {...props} onAddPress={handleAddPress} />}
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Tab.Screen name="Home">
+              {() => (
+                <HomeScreen
+                  transactions={controller.transactions}
+                  totalIncome={controller.totalIncome}
+                  totalExpenses={controller.totalExpenses}
+                />
+              )}
+            </Tab.Screen>
+            <Tab.Screen name="Ledger" component={LedgerScreen} />
+            <Tab.Screen name="Stats" component={StatsScreen} />
+            <Tab.Screen name="Settings" component={SettingsScreen} />
+          </Tab.Navigator>
 
-        {/* Global tab navigator styled with NativeWind */}
-        <TabBar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onAddPress={handleAddPress}
-        />
+          {/* Global transaction creation form modal */}
+          <AddTransactionModal
+            visible={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            spentCategories={controller.spentCategories}
+            incomeCategories={controller.incomeCategories}
+            onAddCategory={controller.addCategory}
+            onLogTransaction={controller.logTransaction}
+          />
 
-        {/* Global transaction creation form modal */}
-        <AddTransactionModal
-          visible={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          spentCategories={controller.spentCategories}
-          incomeCategories={controller.incomeCategories}
-          onAddCategory={controller.addCategory}
-          onLogTransaction={controller.logTransaction}
-        />
-
-        <StatusBar style="light" />
-      </View>
+          <StatusBar style="light" />
+        </View>
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }

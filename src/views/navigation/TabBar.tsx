@@ -3,19 +3,9 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Home, Receipt, PieChart, Settings } from "lucide-react-native";
 
 export interface TabBarProps {
-  state?: {
-    routes: Array<{ key: string; name: string }>;
-    index: number;
-  };
+  state?: any;
   descriptors?: any;
-  navigation?: {
-    navigate: (options: { name: string; merge?: boolean }) => void;
-    emit: (options: {
-      type: string;
-      target: string;
-      canPreventDefault?: boolean;
-    }) => { defaultPrevented: boolean };
-  };
+  navigation?: any;
   // Optional props for standalone/mock use (when routing isn't wired up)
   activeTab?: string;
   onTabChange?: (tabName: string) => void;
@@ -58,7 +48,7 @@ export default function TabBar({
 
   const handleTabPress = (tabName: string) => {
     if (isNavigationMode) {
-      const index = state.routes.findIndex((r) => r.name === tabName);
+      const index = state.routes.findIndex((r: any) => r.name === tabName);
       if (index === -1) return;
       const route = state.routes[index];
       const isFocused = state.index === index;
