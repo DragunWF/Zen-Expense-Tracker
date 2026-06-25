@@ -4,6 +4,10 @@ A highly functional, offline-first personal expense tracker. Designed with a sle
 
 Built using Clean Architecture principles, the application strictly decouples the UI components from the core domain logic and local database operations, ensuring a highly maintainable and scalable codebase.
 
+## ❗❗ DISCLAIMER ❗❗
+
+I built this app to track my own expenses, but feel free to make it your own! If you like the setup, go ahead and clone the repository to customize it however you want.
+
 ## Tech Stack
 
 - **Framework:** React Native with Expo
@@ -52,8 +56,8 @@ Follow these steps to run the application on your local machine and physical dev
 1.  **Clone the repository and navigate to the project directory:**
 
     ```bash
-    git clone <your-repo-url>
-    cd expense-log
+    git clone https://github.com/DragunWF/Expense-Log
+    cd Expense-Log
     ```
 
 2.  **Install dependencies:**
@@ -63,12 +67,18 @@ Follow these steps to run the application on your local machine and physical dev
     # or yarn install
     ```
 
-3.  **Run the development server:**
+3.  **Create `.env` file with the following content:**
+
+    ```
+    DB_FILE_NAME=file:local.db
+    ```
+
+4.  **Run the development server:**
 
     ```bash
     npx expo start
     ```
 
-4.  **Connect your device:**
+5.  **Connect your device:**
     - Open the Expo Go app on your phone.
     - Scan the QR code displayed in your terminal (or browser window) to launch Expense-Log.
