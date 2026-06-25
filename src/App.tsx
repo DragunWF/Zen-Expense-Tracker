@@ -19,10 +19,7 @@ export default function App() {
   const controller = useExpenseController();
 
   const handleAddPress = () => {
-    if (activeTab === "Home") {
-      setIsAddModalOpen(true);
-    } else if (activeTab === "Ledger") {
-      setActiveTab("Home");
+    if (activeTab === "Home" || activeTab === "Ledger") {
       setIsAddModalOpen(true);
     }
   };
