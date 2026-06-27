@@ -168,12 +168,12 @@ export function useExpenseController() {
 
   // Add a new custom category
   const addCategory = useCallback(
-    async (name: string, type: "spent" | "income") => {
+    async (name: string, icon: string, type: "spent" | "income") => {
       const dbType = type === "spent" ? "expense" : "income";
       try {
         await ExpenseRepository.insertCategory({
           name,
-          icon: "📌", // default custom category emoji
+          icon, // Use the dynamically passed icon
           type: dbType,
         });
         await loadData();

@@ -76,7 +76,9 @@ export default function App() {
               onClose={() => setIsAddModalOpen(false)}
               spentCategories={controller.spentCategories}
               incomeCategories={controller.incomeCategories}
-              onAddCategory={controller.addCategory}
+              onAddCategory={(name, icon, type) =>
+                controller.addCategory(name, icon, type)
+              }
               onLogTransaction={controller.logTransaction}
               onDeleteCategory={controller.deleteCategory}
             />

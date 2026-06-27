@@ -20,7 +20,11 @@ export interface AddTransactionModalProps {
   onClose: () => void;
   spentCategories: Category[];
   incomeCategories: Category[];
-  onAddCategory: (name: string, type: TransactionType) => Promise<void>;
+  onAddCategory: (
+    name: string,
+    icon: string,
+    type: TransactionType,
+  ) => Promise<void>;
   onLogTransaction: (
     amount: number,
     type: TransactionType,
@@ -54,6 +58,8 @@ export default function AddTransactionModal({
   const [showNewCatInput, setShowNewCatInput] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [selectedIcon, setSelectedIcon] = useState<string>("📌");
+  const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
 
   // Reset inputs when modal becomes visible
   useEffect(() => {
@@ -63,6 +69,8 @@ export default function AddTransactionModal({
       setShowNewCatInput(false);
       setNewCategoryName("");
       setIsEditMode(false);
+      setSelectedIcon("📌");
+      setShowIconPicker(false);
     }
   }, [visible]);
 
@@ -83,10 +91,11 @@ export default function AddTransactionModal({
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
-    await onAddCategory(trimmed, activeTab);
+    await onAddCategory(trimmed, selectedIcon, activeTab);
     setNewCategoryName("");
+    setSelectedIcon("📌");
     setShowNewCatInput(false);
-  }, [newCategoryName, activeTab, onAddCategory]);
+  }, [newCategoryName, selectedIcon, activeTab, onAddCategory]);
 
   const handleLogTransaction = useCallback(
     async (category: Category) => {
@@ -132,7 +141,7 @@ export default function AddTransactionModal({
         >
           {/* Sheet container */}
           <Pressable
-            className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50"
+            className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50 relative"
             onPress={() => {
               /* intentionally swallows backdrop press */
             }}
@@ -274,6 +283,7 @@ export default function AddTransactionModal({
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   nestedScrollEnabled
+                  keyboardShouldPersistTaps="handled"
                 >
                   <View className="flex-row flex-wrap justify-between">
                     {/* Real categories */}
@@ -342,8 +352,14 @@ export default function AddTransactionModal({
 
                   {/* Inline category creator */}
                   {showNewCatInput && (
-                    <View className="flex-row items-center mt-1 mb-3 bg-slate-800 border border-slate-600 rounded-2xl px-4 py-3">
-                      <Text className="text-base mr-2">📌</Text>
+                    <View className="flex-row items-center mt-1 mb-3 bg-slate-800 border border-slate-600 rounded-2xl px-3 py-3">
+                      <Pressable
+                        onPress={() => setShowIconPicker(true)}
+                        className="bg-slate-700/80 border border-slate-600 rounded-xl px-3 py-2 mr-3 flex-row items-center"
+                      >
+                        <Text className="text-base mr-1">{selectedIcon}</Text>
+                        <Text className="text-slate-400 text-[10px]">▼</Text>
+                      </Pressable>
                       <TextInput
                         value={newCategoryName}
                         onChangeText={setNewCategoryName}
@@ -364,6 +380,96 @@ export default function AddTransactionModal({
                       </Pressable>
                     </View>
                   )}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Icon Picker Overlay (Replaces second modal to prevent React Native overlay bugs) */}
+            {showIconPicker && (
+              <View className="absolute inset-0 bg-slate-900 rounded-t-3xl px-5 pt-5 pb-10 z-50 flex flex-col">
+                <View className="w-10 h-1 rounded-full bg-slate-700 self-center mb-5" />
+
+                <View className="flex-row justify-between items-center mb-5">
+                  <Text className="text-slate-100 text-lg font-bold">
+                    Select Category Icon
+                  </Text>
+                  <Pressable
+                    onPress={() => setShowIconPicker(false)}
+                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700/50 active:bg-slate-700"
+                  >
+                    <Text className="text-slate-300 font-semibold text-xs">
+                      Close
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View className="flex-row flex-wrap justify-center gap-3 pb-5">
+                    {[
+                      "🍔",
+                      "🍕",
+                      "☕",
+                      "🍳",
+                      "🍎",
+                      "🍣",
+                      "🍩",
+                      "🍺",
+                      "🛍️",
+                      "👟",
+                      "👕",
+                      "🎁",
+                      "💄",
+                      "💻",
+                      "📱",
+                      "🚗",
+                      "🚌",
+                      "✈️",
+                      "🚲",
+                      "⛽",
+                      "🚇",
+                      "⚡",
+                      "💡",
+                      "🏠",
+                      "🔑",
+                      "🔧",
+                      "📶",
+                      "💳",
+                      "🎮",
+                      "🎬",
+                      "🎧",
+                      "🎨",
+                      "📚",
+                      "⚽",
+                      "🏋️",
+                      "💊",
+                      "🩺",
+                      "🍼",
+                      "🧸",
+                      "🐶",
+                      "🐱",
+                      "💸",
+                      "💵",
+                      "📈",
+                      "💰",
+                      "💼",
+                      "🏛️",
+                      "📌",
+                    ].map((emoji, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => {
+                          setSelectedIcon(emoji);
+                          setShowIconPicker(false);
+                        }}
+                        className="w-12 h-12 items-center justify-center bg-slate-800 rounded-full active:bg-emerald-500/20 active:border active:border-emerald-500 border border-transparent"
+                      >
+                        <Text className="text-2xl">{emoji}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </ScrollView>
               </View>
             )}
