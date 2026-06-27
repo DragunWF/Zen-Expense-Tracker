@@ -194,7 +194,7 @@ export default function AddTransactionModal({
 
                 {/* Amount input */}
                 <View className="items-center mb-8">
-                  <Text className="text-slate-500 text-sm font-medium mb-4">
+                  <Text className="text-slate-500 text-sm font-medium">
                     Enter amount ({APP_CONFIG.currencySymbol})
                   </Text>
                   <TextInput
@@ -203,7 +203,7 @@ export default function AddTransactionModal({
                     placeholder="0.00"
                     placeholderTextColor="#475569"
                     keyboardType="decimal-pad"
-                    className="text-slate-100 text-5xl font-extrabold text-center w-full p-4"
+                    className="text-slate-100 text-5xl font-extrabold text-center w-full h-20 py-0 leading-[60px]"
                   />
                 </View>
 
