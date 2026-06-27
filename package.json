@@ -9,6 +9,7 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "expo": "~54.0.0",
+    "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^1.21.0",
     "nativewind": "^4.2.6",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
+    "babel-plugin-inline-import": "^3.0.0",
     "babel-preset-expo": "~54.0.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.22.4",

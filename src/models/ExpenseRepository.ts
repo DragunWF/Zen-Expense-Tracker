@@ -1,101 +1,67 @@
+import { db } from "../core/database";
+import { categories, transactions } from "./schema";
+import { eq, desc } from "drizzle-orm";
 import { Category, Transaction } from "./types";
-
-// In-memory mock database store persisting for the lifecycle of the application run
-let mockCategories: Category[] = [
-  // Expense Categories
-  { id: 1, name: "Food", icon: "🍔", type: "expense" },
-  { id: 2, name: "Transport", icon: "🚗", type: "expense" },
-  { id: 3, name: "Utilities", icon: "⚡", type: "expense" },
-  { id: 4, name: "Entertainment", icon: "🎬", type: "expense" },
-  { id: 5, name: "Shopping", icon: "🛍️", type: "expense" },
-  { id: 6, name: "Health", icon: "💊", type: "expense" },
-
-  // Income Categories
-  { id: 7, name: "Salary", icon: "💼", type: "income" },
-  { id: 8, name: "Freelance", icon: "💻", type: "income" },
-  { id: 9, name: "Investments", icon: "📈", type: "income" },
-  { id: 10, name: "Gifts", icon: "🎁", type: "income" },
-  { id: 11, name: "Side Hustle", icon: "🚀", type: "income" },
-  { id: 12, name: "Rental", icon: "🏠", type: "income" },
-];
-
-let mockTransactions: Transaction[] = [
-  {
-    id: 1,
-    amount: 15000,
-    type: "income",
-    notes: "Initial salary payment",
-    categoryId: 7, // Salary
-    createdAt: "2026-06-20T00:00:00.000Z",
-  },
-  {
-    id: 2,
-    amount: 3000,
-    type: "expense",
-    notes: "Grocery run",
-    categoryId: 1, // Food
-    createdAt: "2026-06-22T00:00:00.000Z",
-  },
-  {
-    id: 3,
-    amount: 2000,
-    type: "expense",
-    notes: "Gas refill",
-    categoryId: 2, // Transport
-    createdAt: "2026-06-24T00:00:00.000Z",
-  },
-];
 
 export const ExpenseRepository = {
   // Fetch all categories, optionally filtered by type
   async getCategories(type?: "income" | "expense"): Promise<Category[]> {
-    // Simulate database delay
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    if (type) {
-      return mockCategories.filter((cat) => cat.type === type);
+    let result = await db.select().from(categories);
+
+    // Seed default categories if none exist
+    if (result.length === 0) {
+      const defaultCategories: Omit<Category, "id">[] = [
+        // Expense Categories
+        { name: "Food", icon: "🍔", type: "expense" },
+        { name: "Transport", icon: "🚗", type: "expense" },
+        { name: "Utilities", icon: "⚡", type: "expense" },
+        { name: "Entertainment", icon: "🎬", type: "expense" },
+        { name: "Shopping", icon: "🛍️", type: "expense" },
+        { name: "Health", icon: "💊", type: "expense" },
+
+        // Income Categories
+        { name: "Salary", icon: "💼", type: "income" },
+        { name: "Freelance", icon: "💻", type: "income" },
+        { name: "Investments", icon: "📈", type: "income" },
+        { name: "Gifts", icon: "🎁", type: "income" },
+        { name: "Side Hustle", icon: "🚀", type: "income" },
+        { name: "Rental", icon: "🏠", type: "income" },
+      ];
+
+      await db.insert(categories).values(defaultCategories);
+      result = await db.select().from(categories);
     }
-    return [...mockCategories];
+
+    if (type) {
+      return result.filter((cat) => cat.type === type);
+    }
+    return result;
   },
 
   // Insert a new category
   async insertCategory(category: Omit<Category, "id">): Promise<Category> {
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const nextId =
-      mockCategories.length > 0
-        ? Math.max(...mockCategories.map((c) => c.id)) + 1
-        : 1;
-    const newCategory: Category = {
-      ...category,
-      id: nextId,
-    };
-    mockCategories.push(newCategory);
-    return newCategory;
+    const [inserted] = await db.insert(categories).values(category).returning();
+    return inserted;
   },
 
-  // Fetch all transactions ordered by date descending
+  // Fetch all transactions ordered by date/createdAt descending
   async getTransactions(): Promise<Transaction[]> {
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    // Sort descending by date
-    return [...mockTransactions].sort(
-      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
-    );
+    return db.select().from(transactions).orderBy(desc(transactions.createdAt));
   },
 
   // Insert a new transaction
   async insertTransaction(
-    tx: Omit<Transaction, "id" | "createdAt">
+    tx: Omit<Transaction, "id" | "createdAt">,
   ): Promise<Transaction> {
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const nextId =
-      mockTransactions.length > 0
-        ? Math.max(...mockTransactions.map((t) => t.id)) + 1
-        : 1;
-    const newTx: Transaction = {
-      ...tx,
-      id: nextId,
-      createdAt: new Date().toISOString(),
-    };
-    mockTransactions.push(newTx);
-    return newTx;
+    const [inserted] = await db
+      .insert(transactions)
+      .values({
+        amount: tx.amount,
+        type: tx.type,
+        notes: tx.notes,
+        categoryId: tx.categoryId,
+      })
+      .returning();
+    return inserted;
   },
 };

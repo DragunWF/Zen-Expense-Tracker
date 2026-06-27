@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./core/global.css";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -12,6 +12,9 @@ import StatsScreen from "./views/screens/StatsScreen";
 import TabBar from "./views/navigation/TabBar";
 import AddTransactionModal from "./views/components/AddTransactionModal";
 import { useExpenseController } from "./controllers/useExpenseController";
+import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
+import migrations from "../drizzle/migrations";
+import { db } from "./core/database";
 
 const Tab = createBottomTabNavigator();
 
@@ -20,10 +23,30 @@ export default function App() {
 
   // Controller hook providing unified logic and data state
   const controller = useExpenseController();
+  const { success: migrationsLoaded, error: migrationError } = useMigrations(
+    db,
+    migrations,
+  );
 
   const handleAddPress = () => {
     setIsAddModalOpen(true);
   };
+
+  // Display loading screen if migrations are not loaded
+  if (!migrationsLoaded) {
+    return (
+      <View className="flex-1 bg-slate-900 justify-center items-center px-6">
+        <Text className="text-emerald-400 text-lg font-bold">
+          Initializing Database...
+        </Text>
+        {migrationError && (
+          <Text className="text-rose-400 text-xs mt-2 text-center">
+            {migrationError.message}
+          </Text>
+        )}
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
