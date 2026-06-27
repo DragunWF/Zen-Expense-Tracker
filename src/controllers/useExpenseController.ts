@@ -184,6 +184,19 @@ export function useExpenseController() {
     [loadData],
   );
 
+  // Update an existing category
+  const updateCategory = useCallback(
+    async (id: number, name: string, icon: string) => {
+      try {
+        await ExpenseRepository.updateCategory(id, name, icon);
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to update category.");
+      }
+    },
+    [loadData],
+  );
+
   // Delete an existing category
   const deleteCategory = useCallback(
     async (categoryId: number) => {
@@ -213,6 +226,7 @@ export function useExpenseController() {
     error,
     logTransaction,
     addCategory,
+    updateCategory,
     deleteCategory,
     refreshData: loadData,
     isProfitHidden,

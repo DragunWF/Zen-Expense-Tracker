@@ -109,4 +109,11 @@ export const ExpenseRepository = {
       await tx.delete(categories).where(eq(categories.id, categoryId));
     });
   },
+
+  async updateCategory(id: number, name: string, icon: string): Promise<void> {
+    await db
+      .update(categories)
+      .set({ name, icon })
+      .where(eq(categories.id, id));
+  },
 };

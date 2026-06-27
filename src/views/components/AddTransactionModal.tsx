@@ -25,6 +25,7 @@ export interface AddTransactionModalProps {
     icon: string,
     type: TransactionType,
   ) => Promise<void>;
+  onUpdateCategory: (id: number, name: string, icon: string) => Promise<void>;
   onLogTransaction: (
     amount: number,
     type: TransactionType,
@@ -46,6 +47,7 @@ export default function AddTransactionModal({
   spentCategories,
   incomeCategories,
   onAddCategory,
+  onUpdateCategory,
   onLogTransaction,
   onDeleteCategory,
 }: AddTransactionModalProps) {
@@ -60,6 +62,7 @@ export default function AddTransactionModal({
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("📌");
   const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Reset inputs when modal becomes visible
   useEffect(() => {
@@ -71,6 +74,7 @@ export default function AddTransactionModal({
       setIsEditMode(false);
       setSelectedIcon("📌");
       setShowIconPicker(false);
+      setEditingCategory(null);
     }
   }, [visible]);
 
@@ -85,17 +89,30 @@ export default function AddTransactionModal({
     setActiveTab(tab);
     setShowNewCatInput(false);
     setNewCategoryName("");
+    setEditingCategory(null);
   }, []);
 
-  const handleAddCategory = useCallback(async () => {
+  const handleSaveCategory = useCallback(async () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
-    await onAddCategory(trimmed, selectedIcon, activeTab);
+    if (editingCategory) {
+      await onUpdateCategory(editingCategory.id, trimmed, selectedIcon);
+    } else {
+      await onAddCategory(trimmed, selectedIcon, activeTab);
+    }
     setNewCategoryName("");
     setSelectedIcon("📌");
     setShowNewCatInput(false);
-  }, [newCategoryName, selectedIcon, activeTab, onAddCategory]);
+    setEditingCategory(null);
+  }, [
+    newCategoryName,
+    selectedIcon,
+    activeTab,
+    editingCategory,
+    onAddCategory,
+    onUpdateCategory,
+  ]);
 
   const handleLogTransaction = useCallback(
     async (category: Category) => {
@@ -307,15 +324,33 @@ export default function AddTransactionModal({
                         </Text>
 
                         {isEditMode && cat.name !== "Other" && (
-                          <Pressable
-                            onPress={() => handleDeleteCategory(cat)}
-                            className="absolute -top-1.5 -right-1.5 bg-rose-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
-                            hitSlop={8}
-                          >
-                            <Text className="text-slate-50 font-bold text-xs leading-tight mb-0.5">
-                              -
-                            </Text>
-                          </Pressable>
+                          <>
+                            {/* Edit Badge */}
+                            <Pressable
+                              onPress={() => {
+                                setEditingCategory(cat);
+                                setNewCategoryName(cat.name);
+                                setSelectedIcon(cat.icon);
+                                setShowNewCatInput(true);
+                              }}
+                              className="absolute -top-1.5 -left-1.5 bg-emerald-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
+                              hitSlop={8}
+                            >
+                              <Text className="text-slate-900 font-bold text-[10px] leading-tight">
+                                ✏️
+                              </Text>
+                            </Pressable>
+                            {/* Delete Badge */}
+                            <Pressable
+                              onPress={() => handleDeleteCategory(cat)}
+                              className="absolute -top-1.5 -right-1.5 bg-rose-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
+                              hitSlop={8}
+                            >
+                              <Text className="text-slate-50 font-bold text-xs leading-tight mb-0.5">
+                                -
+                              </Text>
+                            </Pressable>
+                          </>
                         )}
                         {isEditMode && cat.name === "Other" && (
                           <View className="absolute top-2 right-2 opacity-50">
@@ -341,7 +376,11 @@ export default function AddTransactionModal({
                   {/* Done Editing Full-width Button */}
                   {isEditMode && (
                     <Pressable
-                      onPress={() => setIsEditMode(false)}
+                      onPress={() => {
+                        setIsEditMode(false);
+                        setEditingCategory(null);
+                        setShowNewCatInput(false);
+                      }}
                       className="mt-2 w-full bg-slate-700 active:bg-slate-600 py-3.5 rounded-xl items-center justify-center"
                     >
                       <Text className="text-slate-200 font-bold text-sm">
@@ -363,19 +402,36 @@ export default function AddTransactionModal({
                       <TextInput
                         value={newCategoryName}
                         onChangeText={setNewCategoryName}
-                        placeholder="Category name..."
+                        placeholder={
+                          editingCategory
+                            ? "Edit category..."
+                            : "Category name..."
+                        }
                         placeholderTextColor="#64748B"
                         autoFocus
-                        className="flex-1 text-slate-100 font-medium text-sm mr-3"
-                        onSubmitEditing={handleAddCategory}
+                        className="flex-1 text-slate-100 font-medium text-sm mr-2"
+                        onSubmitEditing={handleSaveCategory}
                         returnKeyType="done"
                       />
+                      {editingCategory && (
+                        <Pressable
+                          onPress={() => {
+                            setEditingCategory(null);
+                            setShowNewCatInput(false);
+                            setNewCategoryName("");
+                            setSelectedIcon("📌");
+                          }}
+                          className="mr-2 px-1 py-1"
+                        >
+                          <Text className="text-slate-400 text-lg">×</Text>
+                        </Pressable>
+                      )}
                       <Pressable
-                        onPress={handleAddCategory}
+                        onPress={handleSaveCategory}
                         className="bg-emerald-500 active:bg-emerald-600 px-4 py-2 rounded-xl"
                       >
                         <Text className="text-slate-900 font-bold text-sm">
-                          Add
+                          {editingCategory ? "Save" : "Add"}
                         </Text>
                       </Pressable>
                     </View>

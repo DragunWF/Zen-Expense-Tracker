@@ -79,6 +79,7 @@ export default function App() {
               onAddCategory={(name, icon, type) =>
                 controller.addCategory(name, icon, type)
               }
+              onUpdateCategory={controller.updateCategory}
               onLogTransaction={controller.logTransaction}
               onDeleteCategory={controller.deleteCategory}
             />
