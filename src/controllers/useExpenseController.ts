@@ -2,6 +2,13 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { ExpenseRepository } from "../models/ExpenseRepository";
 import { Category, MappedTransaction } from "../models/types";
 
+export type DateFilterType =
+  | "today"
+  | "last_7_days"
+  | "month"
+  | "year"
+  | "all_time";
+
 export function useExpenseController() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<MappedTransaction[]>([]);
@@ -12,6 +19,10 @@ export function useExpenseController() {
   const [isProfitHidden, setIsProfitHidden] = useState<boolean>(false);
   const [isIncomeHidden, setIsIncomeHidden] = useState<boolean>(false);
   const [isExpensesHidden, setIsExpensesHidden] = useState<boolean>(false);
+
+  // State for active date filter
+  const [activeDateFilter, setActiveDateFilter] =
+    useState<DateFilterType>("month");
 
   const toggleProfitVisibility = useCallback(() => {
     setIsProfitHidden((prev) => !prev);
@@ -68,18 +79,55 @@ export function useExpenseController() {
     return categories.filter((c) => c.type === "income");
   }, [categories]);
 
+  // Filtered transactions selector
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const startOfLast7Days = new Date(
+      startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000,
+    );
+
+    return transactions.filter((tx) => {
+      const txDate = tx.date;
+      switch (activeDateFilter) {
+        case "today":
+          return (
+            txDate.getFullYear() === now.getFullYear() &&
+            txDate.getMonth() === now.getMonth() &&
+            txDate.getDate() === now.getDate()
+          );
+        case "last_7_days":
+          return txDate.getTime() >= startOfLast7Days.getTime();
+        case "month":
+          return (
+            txDate.getFullYear() === now.getFullYear() &&
+            txDate.getMonth() === now.getMonth()
+          );
+        case "year":
+          return txDate.getFullYear() === now.getFullYear();
+        case "all_time":
+        default:
+          return true;
+      }
+    });
+  }, [transactions, activeDateFilter]);
+
   // Compute income and expenses summary aggregates
   const totalIncome = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const totalExpenses = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((t) => t.type === "spent")
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // Log a new transaction, mapping UI transaction types to schema categories
   const logTransaction = useCallback(
@@ -141,6 +189,9 @@ export function useExpenseController() {
     toggleProfitVisibility,
     toggleIncomeVisibility,
     toggleExpensesVisibility,
+    activeDateFilter,
+    setDateFilter: setActiveDateFilter,
+    filteredTransactions,
   };
 }
 export type ExpenseController = ReturnType<typeof useExpenseController>;

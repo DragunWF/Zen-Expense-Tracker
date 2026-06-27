@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { Eye, EyeOff } from "lucide-react-native";
+import { Eye, EyeOff, ChevronDown, Check } from "lucide-react-native";
 import { APP_CONFIG } from "../../core/constants";
 import { MappedTransaction } from "../../models/types";
+import { DateFilterType } from "../../controllers/useExpenseController";
 
 // Props interface for the presentational screen view
 export interface HomeScreenProps {
@@ -17,6 +18,8 @@ export interface HomeScreenProps {
   toggleProfitVisibility: () => void;
   toggleIncomeVisibility: () => void;
   toggleExpensesVisibility: () => void;
+  activeDateFilter: DateFilterType;
+  setDateFilter: (filter: DateFilterType) => void;
 }
 
 // ── Helpers ──
@@ -35,6 +38,31 @@ function formatAmount(value: number): string {
   });
 }
 
+const FILTER_OPTIONS: { value: DateFilterType; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "last_7_days", label: "Last 7 Days" },
+  { value: "month", label: "Month" },
+  { value: "year", label: "Year" },
+  { value: "all_time", label: "All Time" },
+];
+
+function getFilterLabel(filter: DateFilterType): string {
+  switch (filter) {
+    case "today":
+      return "Today";
+    case "last_7_days":
+      return "Last 7 Days";
+    case "month":
+      return "Month";
+    case "year":
+      return "Year";
+    case "all_time":
+      return "All Time";
+    default:
+      return "Month";
+  }
+}
+
 export default function HomeScreen({
   transactions,
   totalIncome,
@@ -45,7 +73,12 @@ export default function HomeScreen({
   toggleProfitVisibility,
   toggleIncomeVisibility,
   toggleExpensesVisibility,
+  activeDateFilter,
+  setDateFilter,
 }: HomeScreenProps) {
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] =
+    useState<boolean>(false);
+
   // Compute net profit
   const netProfit = useMemo(
     () => totalIncome - totalExpenses,
@@ -56,6 +89,13 @@ export default function HomeScreen({
     <SafeAreaView className="flex-1 bg-slate-900">
       <StatusBar style="light" />
 
+      {isFilterDropdownOpen && (
+        <Pressable
+          className="absolute top-0 left-0 right-0 bottom-0 z-40 bg-transparent"
+          onPress={() => setIsFilterDropdownOpen(false)}
+        />
+      )}
+
       {/* Main scroll area */}
       <View className="flex-1">
         <ScrollView
@@ -64,7 +104,7 @@ export default function HomeScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* ── Header ── */}
-          <View className="flex-row justify-between items-center mb-6">
+          <View className="flex-row justify-between items-center mb-6 z-50">
             <View>
               <Text className="text-slate-400 text-xs font-semibold uppercase tracking-widest">
                 {new Date().toLocaleDateString("en-US", {
@@ -77,8 +117,45 @@ export default function HomeScreen({
                 Dashboard
               </Text>
             </View>
-            <View className="h-10 w-10 rounded-full bg-slate-800 border border-slate-700 items-center justify-center">
-              <Text className="text-emerald-400 font-bold text-sm">EL</Text>
+            <View className="relative z-50">
+              <Pressable
+                onPress={() => setIsFilterDropdownOpen((prev) => !prev)}
+                className="flex-row items-center bg-slate-800 border border-slate-700/80 px-3 py-1.5 rounded-full active:bg-slate-700/60"
+              >
+                <Text className="text-slate-300 text-xs font-semibold mr-1.5">
+                  {getFilterLabel(activeDateFilter)}
+                </Text>
+                <ChevronDown size={12} color="#94a3b8" />
+              </Pressable>
+
+              {isFilterDropdownOpen && (
+                <View className="absolute right-0 top-10 w-36 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl py-1.5 z-50">
+                  {FILTER_OPTIONS.map((option) => {
+                    const isActive = activeDateFilter === option.value;
+                    return (
+                      <Pressable
+                        key={option.value}
+                        onPress={() => {
+                          setDateFilter(option.value);
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex-row items-center justify-between px-3 py-2 active:bg-slate-700/40"
+                      >
+                        <Text
+                          className={`text-xs ${
+                            isActive
+                              ? "text-emerald-400 font-bold"
+                              : "text-slate-300 font-medium"
+                          }`}
+                        >
+                          {option.label}
+                        </Text>
+                        {isActive && <Check size={12} color="#10b981" />}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
             </View>
           </View>
 
@@ -104,7 +181,9 @@ export default function HomeScreen({
               </View>
               <View className="items-center">
                 <Text className="text-emerald-400 text-5xl font-extrabold tracking-tight mt-1">
-                  {isProfitHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(netProfit)}`}
+                  {isProfitHidden
+                    ? "••••••"
+                    : `${APP_CONFIG.currencySymbol}${formatAmount(netProfit)}`}
                 </Text>
                 <View className="h-px w-16 bg-emerald-500/30 mt-3" />
               </View>
@@ -130,7 +209,9 @@ export default function HomeScreen({
                   </Pressable>
                 </View>
                 <Text className="text-emerald-400 text-xl font-bold">
-                  {isIncomeHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(totalIncome)}`}
+                  {isIncomeHidden
+                    ? "••••••"
+                    : `${APP_CONFIG.currencySymbol}${formatAmount(totalIncome)}`}
                 </Text>
               </View>
               <View className="w-[48%] bg-slate-800 rounded-2xl p-4 border border-slate-700/40">
@@ -151,7 +232,9 @@ export default function HomeScreen({
                   </Pressable>
                 </View>
                 <Text className="text-rose-400 text-xl font-bold">
-                  {isExpensesHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(totalExpenses)}`}
+                  {isExpensesHidden
+                    ? "••••••"
+                    : `${APP_CONFIG.currencySymbol}${formatAmount(totalExpenses)}`}
                 </Text>
               </View>
             </View>

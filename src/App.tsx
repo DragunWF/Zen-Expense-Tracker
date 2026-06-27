@@ -40,7 +40,7 @@ export default function App() {
             <Tab.Screen name="Home">
               {() => (
                 <HomeScreen
-                  transactions={controller.transactions}
+                  transactions={controller.filteredTransactions}
                   totalIncome={controller.totalIncome}
                   totalExpenses={controller.totalExpenses}
                   isProfitHidden={controller.isProfitHidden}
@@ -49,6 +49,8 @@ export default function App() {
                   toggleProfitVisibility={controller.toggleProfitVisibility}
                   toggleIncomeVisibility={controller.toggleIncomeVisibility}
                   toggleExpensesVisibility={controller.toggleExpensesVisibility}
+                  activeDateFilter={controller.activeDateFilter}
+                  setDateFilter={controller.setDateFilter}
                 />
               )}
             </Tab.Screen>
