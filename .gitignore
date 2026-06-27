@@ -1,8 +1,14 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
 # DragunWF
 .env
 dragunwf-secret
 
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Drizzle ORM
+# (Ignore meta/snapshot files if you solely use 'drizzle-kit push' for live DB updates)
+drizzle/meta/
+drizzle/000*
+# (Include drizzle/ folder if you prefer to generate and commit explicit SQL migrations)
 
 # dependencies
 node_modules/
