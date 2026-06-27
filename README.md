@@ -2,7 +2,7 @@
 
 A highly functional, offline-first personal expense tracker. Designed with a sleek, dark slate and emerald-accented aesthetic, Expense-Log prioritizes rapid data entry, strict architectural boundaries, and immediate financial visibility.
 
-Built using Clean Architecture principles, the application strictly decouples the UI components from the core domain logic and local database operations, ensuring a highly maintainable and scalable codebase.
+Built using MVC architecture (Model, View, Controller) principles, the application strictly decouples the UI components from the core domain logic and local database operations, ensuring a highly maintainable and scalable codebase.
 
 ## ❗❗ DISCLAIMER ❗❗
 
@@ -67,7 +67,7 @@ Follow these steps to run the application on your local machine and physical dev
     # or yarn install
     ```
 
-3.  **Create `.env` file with the following content:**
+3.  **Create `.env` file at the root directory with the following content:**
 
     ```
     DB_FILE_NAME=file:local.db
