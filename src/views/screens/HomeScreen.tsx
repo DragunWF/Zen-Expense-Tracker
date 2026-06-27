@@ -6,6 +6,7 @@ import { Eye, EyeOff, ChevronDown, Check, Calendar } from "lucide-react-native";
 import { APP_CONFIG } from "../../core/constants";
 import { MappedTransaction } from "../../models/types";
 import { DateFilterType } from "../../controllers/useExpenseController";
+import { formatAmount, formatDate } from "../../core/helpers";
 
 // Props interface for the presentational screen view
 export interface HomeScreenProps {
@@ -20,22 +21,6 @@ export interface HomeScreenProps {
   toggleExpensesVisibility: () => void;
   activeDateFilter: DateFilterType;
   setDateFilter: (filter: DateFilterType) => void;
-}
-
-// ── Helpers ──
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatAmount(value: number): string {
-  return value.toLocaleString("en-PH", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
 }
 
 const FILTER_OPTIONS: { value: DateFilterType; label: string }[] = [
