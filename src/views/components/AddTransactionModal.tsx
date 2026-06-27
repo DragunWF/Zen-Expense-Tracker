@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { Category } from "../../models/types";
-import { APP_CONFIG } from "../../core/constants";
+import { APP_CONFIG, CATEGORY_ICONS } from "../../core/constants";
 
 type TransactionType = "spent" | "income";
 
@@ -408,56 +408,7 @@ export default function AddTransactionModal({
                   keyboardShouldPersistTaps="handled"
                 >
                   <View className="flex-row flex-wrap justify-center gap-3 pb-5">
-                    {[
-                      "🍔",
-                      "🍕",
-                      "☕",
-                      "🍳",
-                      "🍎",
-                      "🍣",
-                      "🍩",
-                      "🍺",
-                      "🛍️",
-                      "👟",
-                      "👕",
-                      "🎁",
-                      "💄",
-                      "💻",
-                      "📱",
-                      "🚗",
-                      "🚌",
-                      "✈️",
-                      "🚲",
-                      "⛽",
-                      "🚇",
-                      "⚡",
-                      "💡",
-                      "🏠",
-                      "🔑",
-                      "🔧",
-                      "📶",
-                      "💳",
-                      "🎮",
-                      "🎬",
-                      "🎧",
-                      "🎨",
-                      "📚",
-                      "⚽",
-                      "🏋️",
-                      "💊",
-                      "🩺",
-                      "🍼",
-                      "🧸",
-                      "🐶",
-                      "🐱",
-                      "💸",
-                      "💵",
-                      "📈",
-                      "💰",
-                      "💼",
-                      "🏛️",
-                      "📌",
-                    ].map((emoji, index) => (
+                    {CATEGORY_ICONS.map((emoji, index) => (
                       <Pressable
                         key={index}
                         onPress={() => {
