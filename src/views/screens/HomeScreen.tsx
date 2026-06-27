@@ -166,7 +166,9 @@ export default function HomeScreen({
                 </Pressable>
               </View>
               <View className="items-center">
-                <Text className="text-emerald-400 text-5xl font-extrabold tracking-tight mt-1">
+                <Text
+                  className={`${netProfit >= 0 ? "text-emerald-400" : "text-rose-400"} text-5xl font-extrabold tracking-tight mt-1`}
+                >
                   {isProfitHidden
                     ? "••••••"
                     : `${APP_CONFIG.currencySymbol}${formatAmount(netProfit)}`}
