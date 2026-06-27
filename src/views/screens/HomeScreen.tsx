@@ -4,24 +4,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Eye, EyeOff, ChevronDown, Check, Calendar } from "lucide-react-native";
 import { APP_CONFIG } from "../../core/constants";
-import { MappedTransaction } from "../../models/types";
-import { DateFilterType } from "../../controllers/useExpenseController";
+import {
+  DateFilterType,
+  useExpense,
+} from "../../controllers/useExpenseController";
 import { formatAmount, formatDate } from "../../core/helpers";
-
-// Props interface for the presentational screen view
-export interface HomeScreenProps {
-  transactions: MappedTransaction[];
-  totalIncome: number;
-  totalExpenses: number;
-  isProfitHidden: boolean;
-  isIncomeHidden: boolean;
-  isExpensesHidden: boolean;
-  toggleProfitVisibility: () => void;
-  toggleIncomeVisibility: () => void;
-  toggleExpensesVisibility: () => void;
-  activeDateFilter: DateFilterType;
-  setDateFilter: (filter: DateFilterType) => void;
-}
 
 const FILTER_OPTIONS: { value: DateFilterType; label: string }[] = [
   { value: "today", label: "Today" },
@@ -48,19 +35,21 @@ function getFilterLabel(filter: DateFilterType): string {
   }
 }
 
-export default function HomeScreen({
-  transactions,
-  totalIncome,
-  totalExpenses,
-  isProfitHidden,
-  isIncomeHidden,
-  isExpensesHidden,
-  toggleProfitVisibility,
-  toggleIncomeVisibility,
-  toggleExpensesVisibility,
-  activeDateFilter,
-  setDateFilter,
-}: HomeScreenProps) {
+export default function HomeScreen() {
+  const {
+    filteredTransactions: transactions,
+    totalIncome,
+    totalExpenses,
+    isProfitHidden,
+    isIncomeHidden,
+    isExpensesHidden,
+    toggleProfitVisibility,
+    toggleIncomeVisibility,
+    toggleExpensesVisibility,
+    activeDateFilter,
+    setDateFilter,
+  } = useExpense();
+
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] =
     useState<boolean>(false);
 
@@ -102,7 +91,7 @@ export default function HomeScreen({
                 Dashboard
               </Text>
             </View>
-            <View className="relative z-50">
+            <View className="relative">
               <Pressable
                 onPress={() => setIsFilterDropdownOpen((prev) => !prev)}
                 className="flex-row items-center bg-slate-800/90 border border-slate-700/80 px-4 py-2.5 rounded-full active:bg-slate-700/50"
@@ -113,35 +102,6 @@ export default function HomeScreen({
                 </Text>
                 <ChevronDown size={14} color="#94a3b8" />
               </Pressable>
-
-              {isFilterDropdownOpen && (
-                <View className="absolute right-0 top-12 w-40 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl py-1.5 z-50">
-                  {FILTER_OPTIONS.map((option) => {
-                    const isActive = activeDateFilter === option.value;
-                    return (
-                      <Pressable
-                        key={option.value}
-                        onPress={() => {
-                          setDateFilter(option.value);
-                          setIsFilterDropdownOpen(false);
-                        }}
-                        className="flex-row items-center justify-between px-3 py-2 active:bg-slate-700/40"
-                      >
-                        <Text
-                          className={`text-xs ${
-                            isActive
-                              ? "text-emerald-400 font-bold"
-                              : "text-slate-300 font-medium"
-                          }`}
-                        >
-                          {option.label}
-                        </Text>
-                        {isActive && <Check size={12} color="#10b981" />}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              )}
             </View>
           </View>
 
@@ -285,6 +245,36 @@ export default function HomeScreen({
           </View>
         </ScrollView>
       </View>
+
+      {/* Dropdown Menu - rendered outside ScrollView at the root level to ensure touch compatibility on Android/iOS */}
+      {isFilterDropdownOpen && (
+        <View className="absolute right-5 top-[76px] w-40 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl py-1.5 z-50">
+          {FILTER_OPTIONS.map((option) => {
+            const isActive = activeDateFilter === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => {
+                  setDateFilter(option.value);
+                  setIsFilterDropdownOpen(false);
+                }}
+                className="flex-row items-center justify-between px-3 py-2 active:bg-slate-700/40"
+              >
+                <Text
+                  className={`text-xs ${
+                    isActive
+                      ? "text-emerald-400 font-bold"
+                      : "text-slate-300 font-medium"
+                  }`}
+                >
+                  {option.label}
+                </Text>
+                {isActive && <Check size={12} color="#10b981" />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
     </SafeAreaView>
   );
 }

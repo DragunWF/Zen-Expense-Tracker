@@ -11,7 +11,7 @@ import SettingsScreen from "./views/screens/SettingsScreen";
 import StatsScreen from "./views/screens/StatsScreen";
 import TabBar from "./views/navigation/TabBar";
 import AddTransactionModal from "./views/components/AddTransactionModal";
-import { useExpenseController } from "./controllers/useExpenseController";
+import { useExpenseController, ExpenseContext } from "./controllers/useExpenseController";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "../drizzle/migrations";
 import { db } from "./core/database";
@@ -51,49 +51,35 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <View className="flex-1 bg-slate-900">
-          <Tab.Navigator
-            tabBar={(props) => (
-              <TabBar {...props} onAddPress={handleAddPress} />
-            )}
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Tab.Screen name="Home">
-              {() => (
-                <HomeScreen
-                  transactions={controller.filteredTransactions}
-                  totalIncome={controller.totalIncome}
-                  totalExpenses={controller.totalExpenses}
-                  isProfitHidden={controller.isProfitHidden}
-                  isIncomeHidden={controller.isIncomeHidden}
-                  isExpensesHidden={controller.isExpensesHidden}
-                  toggleProfitVisibility={controller.toggleProfitVisibility}
-                  toggleIncomeVisibility={controller.toggleIncomeVisibility}
-                  toggleExpensesVisibility={controller.toggleExpensesVisibility}
-                  activeDateFilter={controller.activeDateFilter}
-                  setDateFilter={controller.setDateFilter}
-                />
+        <ExpenseContext.Provider value={controller}>
+          <View className="flex-1 bg-slate-900">
+            <Tab.Navigator
+              tabBar={(props) => (
+                <TabBar {...props} onAddPress={handleAddPress} />
               )}
-            </Tab.Screen>
-            <Tab.Screen name="Ledger" component={LedgerScreen} />
-            <Tab.Screen name="Stats" component={StatsScreen} />
-            <Tab.Screen name="Settings" component={SettingsScreen} />
-          </Tab.Navigator>
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Tab.Screen name="Home" component={HomeScreen} />
+              <Tab.Screen name="Ledger" component={LedgerScreen} />
+              <Tab.Screen name="Stats" component={StatsScreen} />
+              <Tab.Screen name="Settings" component={SettingsScreen} />
+            </Tab.Navigator>
 
-          {/* Global transaction creation form modal */}
-          <AddTransactionModal
-            visible={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            spentCategories={controller.spentCategories}
-            incomeCategories={controller.incomeCategories}
-            onAddCategory={controller.addCategory}
-            onLogTransaction={controller.logTransaction}
-          />
+            {/* Global transaction creation form modal */}
+            <AddTransactionModal
+              visible={isAddModalOpen}
+              onClose={() => setIsAddModalOpen(false)}
+              spentCategories={controller.spentCategories}
+              incomeCategories={controller.incomeCategories}
+              onAddCategory={controller.addCategory}
+              onLogTransaction={controller.logTransaction}
+            />
 
-          <StatusBar style="light" />
-        </View>
+            <StatusBar style="light" />
+          </View>
+        </ExpenseContext.Provider>
       </NavigationContainer>
     </SafeAreaProvider>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext } from "react";
 import { ExpenseRepository } from "../models/ExpenseRepository";
 import { Category, MappedTransaction } from "../models/types";
 
@@ -52,13 +52,28 @@ export function useExpenseController() {
       // to UI-ready MappedTransaction objects (string IDs, spent/income types, categories, emojis)
       const mapped: MappedTransaction[] = txs.map((t) => {
         const cat = cats.find((c) => c.id === t.categoryId);
+
+        // SQLite CURRENT_TIMESTAMP format is: YYYY-MM-DD HH:MM:SS
+        // Hermes/JSC require standard ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+        // So we replace the space with 'T' and append 'Z' to treat it as UTC.
+        let txDate: Date;
+        if (
+          t.createdAt &&
+          t.createdAt.includes(" ") &&
+          !t.createdAt.includes("T")
+        ) {
+          txDate = new Date(t.createdAt.replace(" ", "T") + "Z");
+        } else {
+          txDate = new Date(t.createdAt);
+        }
+
         return {
           id: String(t.id),
           emoji: cat ? cat.icon : "📌",
           category: cat ? cat.name : "Unknown",
           type: t.type === "expense" ? "spent" : "income",
           amount: t.amount,
-          date: new Date(t.createdAt),
+          date: txDate,
         };
       });
 
@@ -93,6 +108,9 @@ export function useExpenseController() {
 
     return transactions.filter((tx) => {
       const txDate = tx.date;
+      if (!txDate || isNaN(txDate.getTime())) {
+        return false;
+      }
       switch (activeDateFilter) {
         case "today":
           return (
@@ -195,3 +213,13 @@ export function useExpenseController() {
   };
 }
 export type ExpenseController = ReturnType<typeof useExpenseController>;
+
+export const ExpenseContext = createContext<ExpenseController | null>(null);
+
+export const useExpense = () => {
+  const context = useContext(ExpenseContext);
+  if (!context) {
+    throw new Error("useExpense must be used within an ExpenseProvider");
+  }
+  return context;
+};
