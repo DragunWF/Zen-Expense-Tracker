@@ -60,7 +60,7 @@ export default function TabBar({
       });
 
       if (!isFocused && !event.defaultPrevented) {
-        navigation.navigate({ name: route.name, merge: true });
+        navigation.navigate(route.name, { merge: true });
       }
     } else {
       if (onTabChange) {

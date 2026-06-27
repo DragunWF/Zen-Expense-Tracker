@@ -1,12 +1,40 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext } from "react";
 import { ExpenseRepository } from "../models/ExpenseRepository";
 import { Category, MappedTransaction } from "../models/types";
+
+export type DateFilterType =
+  | "today"
+  | "last_7_days"
+  | "month"
+  | "year"
+  | "all_time";
 
 export function useExpenseController() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<MappedTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // States for hiding balance cards
+  const [isProfitHidden, setIsProfitHidden] = useState<boolean>(false);
+  const [isIncomeHidden, setIsIncomeHidden] = useState<boolean>(false);
+  const [isExpensesHidden, setIsExpensesHidden] = useState<boolean>(false);
+
+  // State for active date filter
+  const [activeDateFilter, setActiveDateFilter] =
+    useState<DateFilterType>("month");
+
+  const toggleProfitVisibility = useCallback(() => {
+    setIsProfitHidden((prev) => !prev);
+  }, []);
+
+  const toggleIncomeVisibility = useCallback(() => {
+    setIsIncomeHidden((prev) => !prev);
+  }, []);
+
+  const toggleExpensesVisibility = useCallback(() => {
+    setIsExpensesHidden((prev) => !prev);
+  }, []);
 
   // Load all categories and transactions, mapping database items to presentation items
   const loadData = useCallback(async () => {
@@ -24,13 +52,28 @@ export function useExpenseController() {
       // to UI-ready MappedTransaction objects (string IDs, spent/income types, categories, emojis)
       const mapped: MappedTransaction[] = txs.map((t) => {
         const cat = cats.find((c) => c.id === t.categoryId);
+
+        // SQLite CURRENT_TIMESTAMP format is: YYYY-MM-DD HH:MM:SS
+        // Hermes/JSC require standard ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+        // So we replace the space with 'T' and append 'Z' to treat it as UTC.
+        let txDate: Date;
+        if (
+          t.createdAt &&
+          t.createdAt.includes(" ") &&
+          !t.createdAt.includes("T")
+        ) {
+          txDate = new Date(t.createdAt.replace(" ", "T") + "Z");
+        } else {
+          txDate = new Date(t.createdAt);
+        }
+
         return {
           id: String(t.id),
           emoji: cat ? cat.icon : "📌",
           category: cat ? cat.name : "Unknown",
           type: t.type === "expense" ? "spent" : "income",
           amount: t.amount,
-          date: new Date(t.createdAt),
+          date: txDate,
         };
       });
 
@@ -51,18 +94,58 @@ export function useExpenseController() {
     return categories.filter((c) => c.type === "income");
   }, [categories]);
 
+  // Filtered transactions selector
+  const filteredTransactions = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+    const startOfLast7Days = new Date(
+      startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000,
+    );
+
+    return transactions.filter((tx) => {
+      const txDate = tx.date;
+      if (!txDate || isNaN(txDate.getTime())) {
+        return false;
+      }
+      switch (activeDateFilter) {
+        case "today":
+          return (
+            txDate.getFullYear() === now.getFullYear() &&
+            txDate.getMonth() === now.getMonth() &&
+            txDate.getDate() === now.getDate()
+          );
+        case "last_7_days":
+          return txDate.getTime() >= startOfLast7Days.getTime();
+        case "month":
+          return (
+            txDate.getFullYear() === now.getFullYear() &&
+            txDate.getMonth() === now.getMonth()
+          );
+        case "year":
+          return txDate.getFullYear() === now.getFullYear();
+        case "all_time":
+        default:
+          return true;
+      }
+    });
+  }, [transactions, activeDateFilter]);
+
   // Compute income and expenses summary aggregates
   const totalIncome = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   const totalExpenses = useMemo(() => {
-    return transactions
+    return filteredTransactions
       .filter((t) => t.type === "spent")
       .reduce((sum, t) => sum + t.amount, 0);
-  }, [transactions]);
+  }, [filteredTransactions]);
 
   // Log a new transaction, mapping UI transaction types to schema categories
   const logTransaction = useCallback(
@@ -85,17 +168,43 @@ export function useExpenseController() {
 
   // Add a new custom category
   const addCategory = useCallback(
-    async (name: string, type: "spent" | "income") => {
+    async (name: string, icon: string, type: "spent" | "income") => {
       const dbType = type === "spent" ? "expense" : "income";
       try {
         await ExpenseRepository.insertCategory({
           name,
-          icon: "📌", // default custom category emoji
+          icon, // Use the dynamically passed icon
           type: dbType,
         });
         await loadData();
       } catch (err: any) {
         setError(err.message || "Failed to add category.");
+      }
+    },
+    [loadData],
+  );
+
+  // Update an existing category
+  const updateCategory = useCallback(
+    async (id: number, name: string, icon: string) => {
+      try {
+        await ExpenseRepository.updateCategory(id, name, icon);
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to update category.");
+      }
+    },
+    [loadData],
+  );
+
+  // Delete an existing category
+  const deleteCategory = useCallback(
+    async (categoryId: number) => {
+      try {
+        await ExpenseRepository.deleteCategory(categoryId);
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to delete category.");
       }
     },
     [loadData],
@@ -117,7 +226,28 @@ export function useExpenseController() {
     error,
     logTransaction,
     addCategory,
+    updateCategory,
+    deleteCategory,
     refreshData: loadData,
+    isProfitHidden,
+    isIncomeHidden,
+    isExpensesHidden,
+    toggleProfitVisibility,
+    toggleIncomeVisibility,
+    toggleExpensesVisibility,
+    activeDateFilter,
+    setDateFilter: setActiveDateFilter,
+    filteredTransactions,
   };
 }
 export type ExpenseController = ReturnType<typeof useExpenseController>;
+
+export const ExpenseContext = createContext<ExpenseController | null>(null);
+
+export const useExpense = () => {
+  const context = useContext(ExpenseContext);
+  if (!context) {
+    throw new Error("useExpense must be used within an ExpenseProvider");
+  }
+  return context;
+};

@@ -8,9 +8,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { Category } from "../../models/types";
-import { APP_CONFIG } from "../../core/constants";
+import { APP_CONFIG, CATEGORY_ICONS } from "../../core/constants";
 
 type TransactionType = "spent" | "income";
 
@@ -19,12 +20,18 @@ export interface AddTransactionModalProps {
   onClose: () => void;
   spentCategories: Category[];
   incomeCategories: Category[];
-  onAddCategory: (name: string, type: TransactionType) => Promise<void>;
+  onAddCategory: (
+    name: string,
+    icon: string,
+    type: TransactionType,
+  ) => Promise<void>;
+  onUpdateCategory: (id: number, name: string, icon: string) => Promise<void>;
   onLogTransaction: (
     amount: number,
     type: TransactionType,
     categoryId: number,
   ) => Promise<void>;
+  onDeleteCategory: (categoryId: number) => Promise<void>;
 }
 
 function formatAmount(value: number): string {
@@ -40,7 +47,9 @@ export default function AddTransactionModal({
   spentCategories,
   incomeCategories,
   onAddCategory,
+  onUpdateCategory,
   onLogTransaction,
+  onDeleteCategory,
 }: AddTransactionModalProps) {
   // ── Step 1: amount & type ──
   const [amount, setAmount] = useState<string>("");
@@ -50,6 +59,10 @@ export default function AddTransactionModal({
   // ── Step 2: category inline creation ──
   const [showNewCatInput, setShowNewCatInput] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [selectedIcon, setSelectedIcon] = useState<string>("📌");
+  const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   // Reset inputs when modal becomes visible
   useEffect(() => {
@@ -58,6 +71,10 @@ export default function AddTransactionModal({
       setModalStep(1);
       setShowNewCatInput(false);
       setNewCategoryName("");
+      setIsEditMode(false);
+      setSelectedIcon("📌");
+      setShowIconPicker(false);
+      setEditingCategory(null);
     }
   }, [visible]);
 
@@ -72,16 +89,30 @@ export default function AddTransactionModal({
     setActiveTab(tab);
     setShowNewCatInput(false);
     setNewCategoryName("");
+    setEditingCategory(null);
   }, []);
 
-  const handleAddCategory = useCallback(async () => {
+  const handleSaveCategory = useCallback(async () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
 
-    await onAddCategory(trimmed, activeTab);
+    if (editingCategory) {
+      await onUpdateCategory(editingCategory.id, trimmed, selectedIcon);
+    } else {
+      await onAddCategory(trimmed, selectedIcon, activeTab);
+    }
     setNewCategoryName("");
+    setSelectedIcon("📌");
     setShowNewCatInput(false);
-  }, [newCategoryName, activeTab, onAddCategory]);
+    setEditingCategory(null);
+  }, [
+    newCategoryName,
+    selectedIcon,
+    activeTab,
+    editingCategory,
+    onAddCategory,
+    onUpdateCategory,
+  ]);
 
   const handleLogTransaction = useCallback(
     async (category: Category) => {
@@ -90,6 +121,26 @@ export default function AddTransactionModal({
       onClose();
     },
     [amountIsValid, parsedAmount, activeTab, onLogTransaction, onClose],
+  );
+
+  const handleDeleteCategory = useCallback(
+    (category: Category) => {
+      Alert.alert(
+        "Delete Category",
+        `Are you sure you want to delete "${category.name}"?\n\nTransactions using this category will be moved to "Other".`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await onDeleteCategory(category.id);
+            },
+          },
+        ],
+      );
+    },
+    [onDeleteCategory],
   );
 
   return (
@@ -107,7 +158,7 @@ export default function AddTransactionModal({
         >
           {/* Sheet container */}
           <Pressable
-            className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50"
+            className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50 relative"
             onPress={() => {
               /* intentionally swallows backdrop press */
             }}
@@ -169,7 +220,7 @@ export default function AddTransactionModal({
 
                 {/* Amount input */}
                 <View className="items-center mb-8">
-                  <Text className="text-slate-500 text-sm font-medium mb-2">
+                  <Text className="text-slate-500 text-sm font-medium">
                     Enter amount ({APP_CONFIG.currencySymbol})
                   </Text>
                   <TextInput
@@ -178,7 +229,7 @@ export default function AddTransactionModal({
                     placeholder="0.00"
                     placeholderTextColor="#475569"
                     keyboardType="decimal-pad"
-                    className="text-slate-100 text-5xl font-extrabold text-center w-full"
+                    className="text-slate-100 text-5xl font-extrabold text-center w-full h-20 py-0 leading-[60px]"
                   />
                 </View>
 
@@ -221,68 +272,216 @@ export default function AddTransactionModal({
                   <Text className="text-slate-100 text-lg font-bold flex-1">
                     Select Category
                   </Text>
-                  {/* Inline amount reminder */}
-                  <Text className="text-emerald-400 font-bold text-sm">
-                    {APP_CONFIG.currencySymbol}
-                    {formatAmount(parsedAmount)}
-                  </Text>
+                  {!isEditMode && (
+                    <Text className="text-emerald-400 font-bold text-sm mr-4">
+                      {APP_CONFIG.currencySymbol}
+                      {formatAmount(parsedAmount)}
+                    </Text>
+                  )}
+                  <Pressable
+                    onPress={() => setIsEditMode((prev) => !prev)}
+                    className={`px-3 py-1.5 rounded-full border ${
+                      isEditMode
+                        ? "bg-emerald-500/20 border-emerald-500/50"
+                        : "bg-slate-800 border-slate-700/50"
+                    }`}
+                  >
+                    <Text
+                      className={`font-semibold text-xs ${
+                        isEditMode ? "text-emerald-400" : "text-slate-300"
+                      }`}
+                    >
+                      {isEditMode ? "Done" : "Edit"}
+                    </Text>
+                  </Pressable>
                 </View>
 
                 {/* Category Grid */}
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   nestedScrollEnabled
+                  keyboardShouldPersistTaps="handled"
                 >
                   <View className="flex-row flex-wrap justify-between">
                     {/* Real categories */}
                     {currentCategories.map((cat) => (
                       <Pressable
                         key={cat.id}
-                        onPress={() => handleLogTransaction(cat)}
-                        className="w-[48%] mb-3 flex-row items-center p-3.5 rounded-2xl bg-slate-800 border border-slate-700/50 active:bg-emerald-500/20 active:border-emerald-500"
+                        onPress={() => {
+                          if (!isEditMode) {
+                            handleLogTransaction(cat);
+                          }
+                        }}
+                        className={`w-[48%] mb-3 flex-row items-center justify-between p-3 rounded-2xl bg-slate-800 border ${
+                          isEditMode
+                            ? "border-slate-700/50"
+                            : "border-slate-700/50 active:bg-emerald-500/20 active:border-emerald-500"
+                        }`}
                       >
-                        <Text className="text-xl mr-2.5">{cat.icon}</Text>
-                        <Text className="text-slate-200 font-semibold text-sm flex-1">
-                          {cat.name}
-                        </Text>
+                        <View className="flex-row items-center flex-1 mr-1">
+                          <Text className="text-xl mr-2">{cat.icon}</Text>
+                          <Text
+                            className="text-slate-200 font-semibold text-sm flex-1"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {cat.name}
+                          </Text>
+                        </View>
+
+                        {isEditMode && cat.name !== "Other" && (
+                          <View className="flex-row items-center gap-1.5">
+                            {/* Edit Action Button */}
+                            <Pressable
+                              onPress={() => {
+                                setEditingCategory(cat);
+                                setNewCategoryName(cat.name);
+                                setSelectedIcon(cat.icon);
+                                setShowNewCatInput(true);
+                              }}
+                              className="w-7 h-7 bg-slate-700 active:bg-emerald-500/20 rounded-lg items-center justify-center border border-slate-600"
+                              hitSlop={4}
+                            >
+                              <Text className="text-[10px]">✏️</Text>
+                            </Pressable>
+
+                            {/* Delete Action Button */}
+                            <Pressable
+                              onPress={() => handleDeleteCategory(cat)}
+                              className="w-7 h-7 bg-slate-750 active:bg-rose-500/20 rounded-lg items-center justify-center border border-slate-700"
+                              hitSlop={4}
+                            >
+                              <Text className="text-rose-400 font-bold text-xs leading-none">
+                                ×
+                              </Text>
+                            </Pressable>
+                          </View>
+                        )}
+                        {isEditMode && cat.name === "Other" && (
+                          <View className="w-7 h-7 items-center justify-center opacity-40">
+                            <Text className="text-[10px]">🔒</Text>
+                          </View>
+                        )}
                       </Pressable>
                     ))}
 
                     {/* "+ Add New" dashed pill */}
+                    {!isEditMode && (
+                      <Pressable
+                        onPress={() => setShowNewCatInput(true)}
+                        className="w-[48%] mb-3 flex-row items-center justify-center p-3.5 rounded-2xl border border-dashed border-slate-600"
+                      >
+                        <Text className="text-slate-500 font-semibold text-sm">
+                          + Add New
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* Done Editing Full-width Button */}
+                  {isEditMode && (
                     <Pressable
-                      onPress={() => setShowNewCatInput(true)}
-                      className="w-[48%] mb-3 flex-row items-center justify-center p-3.5 rounded-2xl border border-dashed border-slate-600"
+                      onPress={() => {
+                        setIsEditMode(false);
+                        setEditingCategory(null);
+                        setShowNewCatInput(false);
+                      }}
+                      className="mt-2 w-full bg-slate-700 active:bg-slate-600 py-3.5 rounded-xl items-center justify-center"
                     >
-                      <Text className="text-slate-500 font-semibold text-sm">
-                        + Add New
+                      <Text className="text-slate-200 font-bold text-sm">
+                        Done Editing
                       </Text>
                     </Pressable>
-                  </View>
+                  )}
 
                   {/* Inline category creator */}
                   {showNewCatInput && (
-                    <View className="flex-row items-center mt-1 mb-3 bg-slate-800 border border-slate-600 rounded-2xl px-4 py-3">
-                      <Text className="text-base mr-2">📌</Text>
+                    <View className="flex-row items-center mt-1 mb-3 bg-slate-800 border border-slate-600 rounded-2xl px-3 py-3">
+                      <Pressable
+                        onPress={() => setShowIconPicker(true)}
+                        className="bg-slate-700/80 border border-slate-600 rounded-xl px-3 py-2 mr-3 flex-row items-center"
+                      >
+                        <Text className="text-base mr-1">{selectedIcon}</Text>
+                        <Text className="text-slate-400 text-[10px]">▼</Text>
+                      </Pressable>
                       <TextInput
                         value={newCategoryName}
                         onChangeText={setNewCategoryName}
-                        placeholder="Category name..."
+                        placeholder={
+                          editingCategory
+                            ? "Edit category..."
+                            : "Category name..."
+                        }
                         placeholderTextColor="#64748B"
                         autoFocus
-                        className="flex-1 text-slate-100 font-medium text-sm mr-3"
-                        onSubmitEditing={handleAddCategory}
+                        className="flex-1 text-slate-100 font-medium text-sm mr-2"
+                        onSubmitEditing={handleSaveCategory}
                         returnKeyType="done"
                       />
+                      {editingCategory && (
+                        <Pressable
+                          onPress={() => {
+                            setEditingCategory(null);
+                            setShowNewCatInput(false);
+                            setNewCategoryName("");
+                            setSelectedIcon("📌");
+                          }}
+                          className="mr-2 px-1 py-1"
+                        >
+                          <Text className="text-slate-400 text-lg">×</Text>
+                        </Pressable>
+                      )}
                       <Pressable
-                        onPress={handleAddCategory}
+                        onPress={handleSaveCategory}
                         className="bg-emerald-500 active:bg-emerald-600 px-4 py-2 rounded-xl"
                       >
                         <Text className="text-slate-900 font-bold text-sm">
-                          Add
+                          {editingCategory ? "Save" : "Add"}
                         </Text>
                       </Pressable>
                     </View>
                   )}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Icon Picker Overlay (Replaces second modal to prevent React Native overlay bugs) */}
+            {showIconPicker && (
+              <View className="absolute inset-0 bg-slate-900 rounded-t-3xl px-5 pt-5 pb-10 z-50 flex flex-col">
+                <View className="w-10 h-1 rounded-full bg-slate-700 self-center mb-5" />
+
+                <View className="flex-row justify-between items-center mb-5">
+                  <Text className="text-slate-100 text-lg font-bold">
+                    Select Category Icon
+                  </Text>
+                  <Pressable
+                    onPress={() => setShowIconPicker(false)}
+                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700/50 active:bg-slate-700"
+                  >
+                    <Text className="text-slate-300 font-semibold text-xs">
+                      Close
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View className="flex-row flex-wrap justify-center gap-3 pb-5">
+                    {CATEGORY_ICONS.map((emoji, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => {
+                          setSelectedIcon(emoji);
+                          setShowIconPicker(false);
+                        }}
+                        className="w-12 h-12 items-center justify-center bg-slate-800 rounded-full active:bg-emerald-500/20 active:border active:border-emerald-500 border border-transparent"
+                      >
+                        <Text className="text-2xl">{emoji}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
                 </ScrollView>
               </View>
             )}
