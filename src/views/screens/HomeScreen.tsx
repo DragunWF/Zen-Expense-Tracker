@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { Eye, EyeOff, ChevronDown, Check } from "lucide-react-native";
+import { Eye, EyeOff, ChevronDown, Check, Calendar } from "lucide-react-native";
 import { APP_CONFIG } from "../../core/constants";
 import { MappedTransaction } from "../../models/types";
 import { DateFilterType } from "../../controllers/useExpenseController";
@@ -120,16 +120,17 @@ export default function HomeScreen({
             <View className="relative z-50">
               <Pressable
                 onPress={() => setIsFilterDropdownOpen((prev) => !prev)}
-                className="flex-row items-center bg-slate-800 border border-slate-700/80 px-3 py-1.5 rounded-full active:bg-slate-700/60"
+                className="flex-row items-center bg-slate-800/90 border border-slate-700/80 px-4 py-2.5 rounded-full active:bg-slate-700/50"
               >
-                <Text className="text-slate-300 text-xs font-semibold mr-1.5">
+                <Calendar size={14} color="#10b981" className="mr-2" />
+                <Text className="text-slate-200 text-sm font-semibold ml-1 mr-2">
                   {getFilterLabel(activeDateFilter)}
                 </Text>
-                <ChevronDown size={12} color="#94a3b8" />
+                <ChevronDown size={14} color="#94a3b8" />
               </Pressable>
 
               {isFilterDropdownOpen && (
-                <View className="absolute right-0 top-10 w-36 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl py-1.5 z-50">
+                <View className="absolute right-0 top-12 w-40 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl py-1.5 z-50">
                   {FILTER_OPTIONS.map((option) => {
                     const isActive = activeDateFilter === option.value;
                     return (
