@@ -11,7 +11,10 @@ import SettingsScreen from "./views/screens/SettingsScreen";
 import StatsScreen from "./views/screens/StatsScreen";
 import TabBar from "./views/navigation/TabBar";
 import AddTransactionModal from "./views/components/AddTransactionModal";
-import { useExpenseController, ExpenseContext } from "./controllers/useExpenseController";
+import {
+  useExpenseController,
+  ExpenseContext,
+} from "./controllers/useExpenseController";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "../drizzle/migrations";
 import { db } from "./core/database";
@@ -75,6 +78,7 @@ export default function App() {
               incomeCategories={controller.incomeCategories}
               onAddCategory={controller.addCategory}
               onLogTransaction={controller.logTransaction}
+              onDeleteCategory={controller.deleteCategory}
             />
 
             <StatusBar style="light" />

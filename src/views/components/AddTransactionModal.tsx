@@ -8,6 +8,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { Category } from "../../models/types";
 import { APP_CONFIG } from "../../core/constants";
@@ -25,6 +26,7 @@ export interface AddTransactionModalProps {
     type: TransactionType,
     categoryId: number,
   ) => Promise<void>;
+  onDeleteCategory: (categoryId: number) => Promise<void>;
 }
 
 function formatAmount(value: number): string {
@@ -41,6 +43,7 @@ export default function AddTransactionModal({
   incomeCategories,
   onAddCategory,
   onLogTransaction,
+  onDeleteCategory,
 }: AddTransactionModalProps) {
   // ── Step 1: amount & type ──
   const [amount, setAmount] = useState<string>("");
@@ -50,6 +53,7 @@ export default function AddTransactionModal({
   // ── Step 2: category inline creation ──
   const [showNewCatInput, setShowNewCatInput] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState<string>("");
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
 
   // Reset inputs when modal becomes visible
   useEffect(() => {
@@ -58,6 +62,7 @@ export default function AddTransactionModal({
       setModalStep(1);
       setShowNewCatInput(false);
       setNewCategoryName("");
+      setIsEditMode(false);
     }
   }, [visible]);
 
@@ -90,6 +95,26 @@ export default function AddTransactionModal({
       onClose();
     },
     [amountIsValid, parsedAmount, activeTab, onLogTransaction, onClose],
+  );
+
+  const handleDeleteCategory = useCallback(
+    (category: Category) => {
+      Alert.alert(
+        "Delete Category",
+        `Are you sure you want to delete "${category.name}"?\n\nTransactions using this category will be moved to "Other".`,
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await onDeleteCategory(category.id);
+            },
+          },
+        ],
+      );
+    },
+    [onDeleteCategory],
   );
 
   return (
@@ -169,7 +194,7 @@ export default function AddTransactionModal({
 
                 {/* Amount input */}
                 <View className="items-center mb-8">
-                  <Text className="text-slate-500 text-sm font-medium mb-2">
+                  <Text className="text-slate-500 text-sm font-medium mb-4">
                     Enter amount ({APP_CONFIG.currencySymbol})
                   </Text>
                   <TextInput
@@ -178,7 +203,7 @@ export default function AddTransactionModal({
                     placeholder="0.00"
                     placeholderTextColor="#475569"
                     keyboardType="decimal-pad"
-                    className="text-slate-100 text-5xl font-extrabold text-center w-full"
+                    className="text-slate-100 text-5xl font-extrabold text-center w-full p-4"
                   />
                 </View>
 
@@ -221,11 +246,28 @@ export default function AddTransactionModal({
                   <Text className="text-slate-100 text-lg font-bold flex-1">
                     Select Category
                   </Text>
-                  {/* Inline amount reminder */}
-                  <Text className="text-emerald-400 font-bold text-sm">
-                    {APP_CONFIG.currencySymbol}
-                    {formatAmount(parsedAmount)}
-                  </Text>
+                  {!isEditMode && (
+                    <Text className="text-emerald-400 font-bold text-sm mr-4">
+                      {APP_CONFIG.currencySymbol}
+                      {formatAmount(parsedAmount)}
+                    </Text>
+                  )}
+                  <Pressable
+                    onPress={() => setIsEditMode((prev) => !prev)}
+                    className={`px-3 py-1.5 rounded-full border ${
+                      isEditMode
+                        ? "bg-emerald-500/20 border-emerald-500/50"
+                        : "bg-slate-800 border-slate-700/50"
+                    }`}
+                  >
+                    <Text
+                      className={`font-semibold text-xs ${
+                        isEditMode ? "text-emerald-400" : "text-slate-300"
+                      }`}
+                    >
+                      {isEditMode ? "Done" : "Edit"}
+                    </Text>
+                  </Pressable>
                 </View>
 
                 {/* Category Grid */}
@@ -238,26 +280,65 @@ export default function AddTransactionModal({
                     {currentCategories.map((cat) => (
                       <Pressable
                         key={cat.id}
-                        onPress={() => handleLogTransaction(cat)}
-                        className="w-[48%] mb-3 flex-row items-center p-3.5 rounded-2xl bg-slate-800 border border-slate-700/50 active:bg-emerald-500/20 active:border-emerald-500"
+                        onPress={() => {
+                          if (!isEditMode) {
+                            handleLogTransaction(cat);
+                          }
+                        }}
+                        className={`w-[48%] mb-3 flex-row items-center p-3.5 rounded-2xl bg-slate-800 border relative ${
+                          isEditMode
+                            ? "border-slate-700/50"
+                            : "border-slate-700/50 active:bg-emerald-500/20 active:border-emerald-500"
+                        }`}
                       >
                         <Text className="text-xl mr-2.5">{cat.icon}</Text>
                         <Text className="text-slate-200 font-semibold text-sm flex-1">
                           {cat.name}
                         </Text>
+
+                        {isEditMode && cat.name !== "Other" && (
+                          <Pressable
+                            onPress={() => handleDeleteCategory(cat)}
+                            className="absolute -top-1.5 -right-1.5 bg-rose-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
+                            hitSlop={8}
+                          >
+                            <Text className="text-slate-50 font-bold text-xs leading-tight mb-0.5">
+                              -
+                            </Text>
+                          </Pressable>
+                        )}
+                        {isEditMode && cat.name === "Other" && (
+                          <View className="absolute top-2 right-2 opacity-50">
+                            <Text className="text-[10px]">🔒</Text>
+                          </View>
+                        )}
                       </Pressable>
                     ))}
 
                     {/* "+ Add New" dashed pill */}
+                    {!isEditMode && (
+                      <Pressable
+                        onPress={() => setShowNewCatInput(true)}
+                        className="w-[48%] mb-3 flex-row items-center justify-center p-3.5 rounded-2xl border border-dashed border-slate-600"
+                      >
+                        <Text className="text-slate-500 font-semibold text-sm">
+                          + Add New
+                        </Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* Done Editing Full-width Button */}
+                  {isEditMode && (
                     <Pressable
-                      onPress={() => setShowNewCatInput(true)}
-                      className="w-[48%] mb-3 flex-row items-center justify-center p-3.5 rounded-2xl border border-dashed border-slate-600"
+                      onPress={() => setIsEditMode(false)}
+                      className="mt-2 w-full bg-slate-700 active:bg-slate-600 py-3.5 rounded-xl items-center justify-center"
                     >
-                      <Text className="text-slate-500 font-semibold text-sm">
-                        + Add New
+                      <Text className="text-slate-200 font-bold text-sm">
+                        Done Editing
                       </Text>
                     </Pressable>
-                  </View>
+                  )}
 
                   {/* Inline category creator */}
                   {showNewCatInput && (

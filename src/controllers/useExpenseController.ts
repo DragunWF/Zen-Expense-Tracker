@@ -184,6 +184,19 @@ export function useExpenseController() {
     [loadData],
   );
 
+  // Delete an existing category
+  const deleteCategory = useCallback(
+    async (categoryId: number) => {
+      try {
+        await ExpenseRepository.deleteCategory(categoryId);
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to delete category.");
+      }
+    },
+    [loadData],
+  );
+
   // Initial load on mount
   useEffect(() => {
     loadData();
@@ -200,6 +213,7 @@ export function useExpenseController() {
     error,
     logTransaction,
     addCategory,
+    deleteCategory,
     refreshData: loadData,
     isProfitHidden,
     isIncomeHidden,

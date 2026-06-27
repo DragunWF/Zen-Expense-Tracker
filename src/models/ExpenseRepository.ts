@@ -26,6 +26,10 @@ export const ExpenseRepository = {
         { name: "Gifts", icon: "🎁", type: "income" },
         { name: "Side Hustle", icon: "🚀", type: "income" },
         { name: "Rental", icon: "🏠", type: "income" },
+
+        // System Default Fallbacks
+        { name: "Other", icon: "📦", type: "expense" },
+        { name: "Other", icon: "📦", type: "income" },
       ];
 
       await db.insert(categories).values(defaultCategories);
@@ -63,5 +67,46 @@ export const ExpenseRepository = {
       })
       .returning();
     return inserted;
+  },
+
+  // Delete a category and fallback its transactions to "Other"
+  async deleteCategory(categoryId: number): Promise<void> {
+    const allCategories = await db.select().from(categories);
+    const targetCategory = allCategories.find((c) => c.id === categoryId);
+
+    if (!targetCategory) {
+      throw new Error("Category not found");
+    }
+
+    // Do not allow deleting the 'Other' category
+    if (targetCategory.name === "Other") {
+      throw new Error("Cannot delete the default 'Other' category");
+    }
+
+    // Find the default "Other" category for the matching type
+    let fallbackCategory = allCategories.find(
+      (c) => c.name === "Other" && c.type === targetCategory.type,
+    );
+
+    // If it somehow doesn't exist, create it on the fly
+    if (!fallbackCategory) {
+      const [inserted] = await db
+        .insert(categories)
+        .values({ name: "Other", icon: "📦", type: targetCategory.type })
+        .returning();
+      fallbackCategory = inserted;
+    }
+
+    // Run delete transaction
+    await db.transaction(async (tx) => {
+      // 1. Move all orphaned transactions to the fallback category
+      await tx
+        .update(transactions)
+        .set({ categoryId: fallbackCategory!.id })
+        .where(eq(transactions.categoryId, categoryId));
+
+      // 2. Delete the actual category
+      await tx.delete(categories).where(eq(categories.id, categoryId));
+    });
   },
 };
