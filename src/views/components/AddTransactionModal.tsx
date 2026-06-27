@@ -312,20 +312,26 @@ export default function AddTransactionModal({
                             handleLogTransaction(cat);
                           }
                         }}
-                        className={`w-[48%] mb-3 flex-row items-center p-3.5 rounded-2xl bg-slate-800 border relative ${
+                        className={`w-[48%] mb-3 flex-row items-center justify-between p-3 rounded-2xl bg-slate-800 border ${
                           isEditMode
                             ? "border-slate-700/50"
                             : "border-slate-700/50 active:bg-emerald-500/20 active:border-emerald-500"
                         }`}
                       >
-                        <Text className="text-xl mr-2.5">{cat.icon}</Text>
-                        <Text className="text-slate-200 font-semibold text-sm flex-1">
-                          {cat.name}
-                        </Text>
+                        <View className="flex-row items-center flex-1 mr-1">
+                          <Text className="text-xl mr-2">{cat.icon}</Text>
+                          <Text
+                            className="text-slate-200 font-semibold text-sm flex-1"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {cat.name}
+                          </Text>
+                        </View>
 
                         {isEditMode && cat.name !== "Other" && (
-                          <>
-                            {/* Edit Badge */}
+                          <View className="flex-row items-center gap-1.5">
+                            {/* Edit Action Button */}
                             <Pressable
                               onPress={() => {
                                 setEditingCategory(cat);
@@ -333,27 +339,26 @@ export default function AddTransactionModal({
                                 setSelectedIcon(cat.icon);
                                 setShowNewCatInput(true);
                               }}
-                              className="absolute -top-1.5 -left-1.5 bg-emerald-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
-                              hitSlop={8}
+                              className="w-7 h-7 bg-slate-700 active:bg-emerald-500/20 rounded-lg items-center justify-center border border-slate-600"
+                              hitSlop={4}
                             >
-                              <Text className="text-slate-900 font-bold text-[10px] leading-tight">
-                                ✏️
-                              </Text>
+                              <Text className="text-[10px]">✏️</Text>
                             </Pressable>
-                            {/* Delete Badge */}
+
+                            {/* Delete Action Button */}
                             <Pressable
                               onPress={() => handleDeleteCategory(cat)}
-                              className="absolute -top-1.5 -right-1.5 bg-rose-500 w-6 h-6 rounded-full items-center justify-center border-2 border-slate-900 z-10"
-                              hitSlop={8}
+                              className="w-7 h-7 bg-slate-750 active:bg-rose-500/20 rounded-lg items-center justify-center border border-slate-700"
+                              hitSlop={4}
                             >
-                              <Text className="text-slate-50 font-bold text-xs leading-tight mb-0.5">
-                                -
+                              <Text className="text-rose-400 font-bold text-xs leading-none">
+                                ×
                               </Text>
                             </Pressable>
-                          </>
+                          </View>
                         )}
                         {isEditMode && cat.name === "Other" && (
-                          <View className="absolute top-2 right-2 opacity-50">
+                          <View className="w-7 h-7 items-center justify-center opacity-40">
                             <Text className="text-[10px]">🔒</Text>
                           </View>
                         )}
