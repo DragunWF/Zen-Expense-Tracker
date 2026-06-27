@@ -8,6 +8,23 @@ export function useExpenseController() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // States for hiding balance cards
+  const [isProfitHidden, setIsProfitHidden] = useState<boolean>(false);
+  const [isIncomeHidden, setIsIncomeHidden] = useState<boolean>(false);
+  const [isExpensesHidden, setIsExpensesHidden] = useState<boolean>(false);
+
+  const toggleProfitVisibility = useCallback(() => {
+    setIsProfitHidden((prev) => !prev);
+  }, []);
+
+  const toggleIncomeVisibility = useCallback(() => {
+    setIsIncomeHidden((prev) => !prev);
+  }, []);
+
+  const toggleExpensesVisibility = useCallback(() => {
+    setIsExpensesHidden((prev) => !prev);
+  }, []);
+
   // Load all categories and transactions, mapping database items to presentation items
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -118,6 +135,12 @@ export function useExpenseController() {
     logTransaction,
     addCategory,
     refreshData: loadData,
+    isProfitHidden,
+    isIncomeHidden,
+    isExpensesHidden,
+    toggleProfitVisibility,
+    toggleIncomeVisibility,
+    toggleExpensesVisibility,
   };
 }
 export type ExpenseController = ReturnType<typeof useExpenseController>;

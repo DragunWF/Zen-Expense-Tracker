@@ -30,7 +30,9 @@ export default function App() {
       <NavigationContainer>
         <View className="flex-1 bg-slate-900">
           <Tab.Navigator
-            tabBar={(props) => <TabBar {...props} onAddPress={handleAddPress} />}
+            tabBar={(props) => (
+              <TabBar {...props} onAddPress={handleAddPress} />
+            )}
             screenOptions={{
               headerShown: false,
             }}
@@ -41,6 +43,12 @@ export default function App() {
                   transactions={controller.transactions}
                   totalIncome={controller.totalIncome}
                   totalExpenses={controller.totalExpenses}
+                  isProfitHidden={controller.isProfitHidden}
+                  isIncomeHidden={controller.isIncomeHidden}
+                  isExpensesHidden={controller.isExpensesHidden}
+                  toggleProfitVisibility={controller.toggleProfitVisibility}
+                  toggleIncomeVisibility={controller.toggleIncomeVisibility}
+                  toggleExpensesVisibility={controller.toggleExpensesVisibility}
                 />
               )}
             </Tab.Screen>

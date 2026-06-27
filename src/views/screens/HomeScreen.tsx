@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { Eye, EyeOff } from "lucide-react-native";
 import { APP_CONFIG } from "../../core/constants";
 import { MappedTransaction } from "../../models/types";
 
@@ -10,6 +11,12 @@ export interface HomeScreenProps {
   transactions: MappedTransaction[];
   totalIncome: number;
   totalExpenses: number;
+  isProfitHidden: boolean;
+  isIncomeHidden: boolean;
+  isExpensesHidden: boolean;
+  toggleProfitVisibility: () => void;
+  toggleIncomeVisibility: () => void;
+  toggleExpensesVisibility: () => void;
 }
 
 // ── Helpers ──
@@ -32,6 +39,12 @@ export default function HomeScreen({
   transactions,
   totalIncome,
   totalExpenses,
+  isProfitHidden,
+  isIncomeHidden,
+  isExpensesHidden,
+  toggleProfitVisibility,
+  toggleIncomeVisibility,
+  toggleExpensesVisibility,
 }: HomeScreenProps) {
   // Compute net profit
   const netProfit = useMemo(
@@ -72,35 +85,73 @@ export default function HomeScreen({
           {/* ── Top Section: Dashboard ── */}
           <View className="mb-6">
             {/* Net Profit Card */}
-            <View className="bg-slate-800/50 border border-slate-700/40 rounded-3xl p-6 items-center mb-4">
-              <Text className="text-slate-400 text-xs font-semibold uppercase tracking-widest">
-                Profit
-              </Text>
-              <Text className="text-emerald-400 text-5xl font-extrabold tracking-tight mt-1">
-                {APP_CONFIG.currencySymbol}
-                {formatAmount(netProfit)}
-              </Text>
-              <View className="h-px w-16 bg-emerald-500/30 mt-3" />
+            <View className="bg-slate-800/50 border border-slate-700/40 rounded-3xl p-6 mb-4">
+              <View className="flex-row justify-between items-center w-full mb-1">
+                <Text className="text-slate-400 text-xs font-semibold uppercase tracking-widest">
+                  Profit
+                </Text>
+                <Pressable
+                  onPress={toggleProfitVisibility}
+                  className="p-1 -mr-1 rounded-full active:bg-slate-700/50"
+                  hitSlop={8}
+                >
+                  {isProfitHidden ? (
+                    <EyeOff size={16} color="#64748b" />
+                  ) : (
+                    <Eye size={16} color="#94a3b8" />
+                  )}
+                </Pressable>
+              </View>
+              <View className="items-center">
+                <Text className="text-emerald-400 text-5xl font-extrabold tracking-tight mt-1">
+                  {isProfitHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(netProfit)}`}
+                </Text>
+                <View className="h-px w-16 bg-emerald-500/30 mt-3" />
+              </View>
             </View>
 
             {/* Summary Cards */}
             <View className="flex-row justify-between">
               <View className="w-[48%] bg-slate-800 rounded-2xl p-4 border border-slate-700/40">
-                <Text className="text-slate-400 text-xs font-medium mb-1">
-                  Total Income
-                </Text>
+                <View className="flex-row justify-between items-center mb-1">
+                  <Text className="text-slate-400 text-xs font-medium">
+                    Total Income
+                  </Text>
+                  <Pressable
+                    onPress={toggleIncomeVisibility}
+                    className="p-0.5 rounded-full active:bg-slate-700/50"
+                    hitSlop={8}
+                  >
+                    {isIncomeHidden ? (
+                      <EyeOff size={14} color="#64748b" />
+                    ) : (
+                      <Eye size={14} color="#94a3b8" />
+                    )}
+                  </Pressable>
+                </View>
                 <Text className="text-emerald-400 text-xl font-bold">
-                  {APP_CONFIG.currencySymbol}
-                  {formatAmount(totalIncome)}
+                  {isIncomeHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(totalIncome)}`}
                 </Text>
               </View>
               <View className="w-[48%] bg-slate-800 rounded-2xl p-4 border border-slate-700/40">
-                <Text className="text-slate-400 text-xs font-medium mb-1">
-                  Total Expenses
-                </Text>
+                <View className="flex-row justify-between items-center mb-1">
+                  <Text className="text-slate-400 text-xs font-medium">
+                    Total Expenses
+                  </Text>
+                  <Pressable
+                    onPress={toggleExpensesVisibility}
+                    className="p-0.5 rounded-full active:bg-slate-700/50"
+                    hitSlop={8}
+                  >
+                    {isExpensesHidden ? (
+                      <EyeOff size={14} color="#64748b" />
+                    ) : (
+                      <Eye size={14} color="#94a3b8" />
+                    )}
+                  </Pressable>
+                </View>
                 <Text className="text-rose-400 text-xl font-bold">
-                  {APP_CONFIG.currencySymbol}
-                  {formatAmount(totalExpenses)}
+                  {isExpensesHidden ? "••••••" : `${APP_CONFIG.currencySymbol}${formatAmount(totalExpenses)}`}
                 </Text>
               </View>
             </View>
