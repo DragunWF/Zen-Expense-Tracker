@@ -123,4 +123,52 @@ export const ExpenseRepository = {
       .delete(transactions)
       .where(eq(transactions.id, transactionId));
   },
+
+  // Export: return raw rows for serialization
+  async exportData(): Promise<{ categories: Category[]; transactions: Transaction[] }> {
+    const cats = await db.select().from(categories);
+    const txs = await db.select().from(transactions);
+    return { categories: cats, transactions: txs };
+  },
+
+  // Import: atomically wipe and rewrite both tables
+  async importData(
+    cats: Omit<Category, "id">[],
+    txs: Array<Omit<Transaction, "id">>,
+  ): Promise<void> {
+    await db.transaction(async (trx) => {
+      // Wipe in dependency order (transactions reference categories)
+      await trx.delete(transactions);
+      await trx.delete(categories);
+      if (cats.length > 0) await trx.insert(categories).values(cats);
+      if (txs.length > 0) await trx.insert(transactions).values(txs);
+    });
+  },
+
+  // Reset: wipe all data and re-seed default categories
+  async resetDatabase(): Promise<void> {
+    const defaultCategories: Omit<Category, "id">[] = [
+      { name: "Food", icon: "🍔", type: "expense" },
+      { name: "Transport", icon: "🚗", type: "expense" },
+      { name: "Utilities", icon: "⚡", type: "expense" },
+      { name: "Entertainment", icon: "🎬", type: "expense" },
+      { name: "Shopping", icon: "🛍️", type: "expense" },
+      { name: "Health", icon: "💊", type: "expense" },
+      { name: "Salary", icon: "💼", type: "income" },
+      { name: "Freelance", icon: "💻", type: "income" },
+      { name: "Investments", icon: "📈", type: "income" },
+      { name: "Gifts", icon: "🎁", type: "income" },
+      { name: "Side Hustle", icon: "🚀", type: "income" },
+      { name: "Rental", icon: "🏠", type: "income" },
+      { name: "Other", icon: "📦", type: "expense" },
+      { name: "Other", icon: "📦", type: "income" },
+    ];
+
+    await db.transaction(async (trx) => {
+      await trx.delete(transactions);
+      await trx.delete(categories);
+      await trx.insert(categories).values(defaultCategories);
+    });
+  },
 };
+
