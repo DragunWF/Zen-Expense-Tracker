@@ -58,6 +58,9 @@ To maintain idiomatic code that supports rapid data entry, you must follow these
 
 - **Strict Component Modularity & Organization:** When implementing new features, views, or UI elements, never build massive, monolithic screen or component files. You must aggressively break down interfaces into isolated, modular sub-components and organize them into specific subdirectories within `src/views/components/`:
   - `home/` for home/dashboard specific components.
+  - `ledger/` for ledger/transaction list specific components.
+  - `stats/` for statistics/analytics specific components.
+  - `settings/` for configuration/settings specific components.
   - `transactionModal/` for transaction modal specific components.
   - `ui/` for cross-screen reusable components (like `SummaryCard`, custom inputs, etc.).
   - Other feature-specific subdirectories as the application grows.
