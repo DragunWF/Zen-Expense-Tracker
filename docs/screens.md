@@ -18,6 +18,7 @@ This screen is dedicated to data visualization, transforming raw ledger data int
 
 - **Categorical Breakdown:** A pie chart component illustrating the distribution of expenses across various categories, making it easy to identify spending habits.
 - **Cash Flow Trends:** A line graph tracking the momentum of income and expenses over a selected time period.
+- **Transaction Activity Heatmap:** A visual calendar-grid heatmap (similar to GitHub contributions) showing daily transaction frequencies or spend volumes over the last 90 days. Days are colored in shades of dark slate to bright emerald depending on activity level.
 
 **4. Settings (Configuration & Preferences)**
 The Settings screen provides modular controls for the application's configuration.

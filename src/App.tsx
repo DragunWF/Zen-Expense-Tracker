@@ -10,7 +10,7 @@ import LedgerScreen from "./views/screens/LedgerScreen";
 import SettingsScreen from "./views/screens/SettingsScreen";
 import StatsScreen from "./views/screens/StatsScreen";
 import TabBar from "./views/navigation/TabBar";
-import AddTransactionModal from "./views/components/AddTransactionModal";
+import AddTransactionModal from "./views/components/transactionModal/AddTransactionModal";
 import {
   useExpenseController,
   ExpenseContext,
