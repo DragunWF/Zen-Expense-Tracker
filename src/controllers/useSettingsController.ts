@@ -205,7 +205,7 @@ export function useSettingsController() {
                     try {
                       await ExpenseRepository.resetDatabase();
                       await refreshData();
-                      flashSuccess("Database reset successfully.");
+                      flashSuccess("App data reset successfully.");
                     } catch {
                       Alert.alert("Reset Failed", "Could not reset the database.");
                     } finally {
