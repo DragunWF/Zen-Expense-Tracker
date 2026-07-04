@@ -103,10 +103,10 @@ export function useStatsController() {
     return transactions.filter((tx) => tx.date >= windowStart);
   }, [transactions, windowStart]);
 
-  // ── Heatmap: always last 90 days regardless of timeframe selector ──────────
+  // ── Heatmap: always last 180 days regardless of timeframe selector ─────────
   const heatmapDays = useMemo<HeatmapDay[]>(() => {
     const today = startOfDay(new Date());
-    const start = subtractDays(today, 89);
+    const start = subtractDays(today, 179);
 
     // Build lookup map of dateKey → { count, total }
     const map: Record<string, { count: number; total: number }> = {};

@@ -52,7 +52,7 @@ export default function ActivityHeatmap({ days }: ActivityHeatmapProps) {
     <View className="mx-5 mb-4 bg-slate-800/40 border border-slate-700/40 rounded-2xl px-4 pt-4 pb-3">
       {/* Section label */}
       <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">
-        Activity · Last 90 Days
+        Activity · Last 180 Days
       </Text>
 
       {/* Day-of-week labels */}
