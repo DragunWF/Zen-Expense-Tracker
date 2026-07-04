@@ -5,7 +5,7 @@ import {
   useCallback,
 } from "react";
 import { ExpenseRepository } from "../models/ExpenseRepository";
-import { Category, MappedTransaction } from "../models/types";
+import { useExpense } from "./useExpenseController";
 
 // ── Filter Types ──────────────────────────────────────────────────────────────
 
@@ -65,11 +65,14 @@ function resolveDateRange(filter: LedgerDateFilter): {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useLedgerController() {
-  // ── Raw data ────────────────────────────────────────────────────────────────
-  const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [allTransactions, setAllTransactions] = useState<MappedTransaction[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Consume unified data from ExpenseContext
+  const {
+    categories: allCategories,
+    transactions: allTransactions,
+    loading,
+    error,
+    refreshData,
+  } = useExpense();
 
   // ── Filter states ────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -80,60 +83,13 @@ export function useLedgerController() {
   // ── Pagination ───────────────────────────────────────────────────────────────
   const [pageLimit, setPageLimit] = useState<number>(PAGE_SIZE);
 
-  // ── Data loading ─────────────────────────────────────────────────────────────
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [cats, txs] = await Promise.all([
-        ExpenseRepository.getCategories(),
-        ExpenseRepository.getTransactions(),
-      ]);
-
-      setAllCategories(cats);
-
-      // Map raw Transaction → MappedTransaction (same logic as useExpenseController)
-      const mapped: MappedTransaction[] = txs.map((t) => {
-        const cat = cats.find((c) => c.id === t.categoryId);
-
-        let txDate: Date;
-        if (t.createdAt && t.createdAt.includes(" ") && !t.createdAt.includes("T")) {
-          txDate = new Date(t.createdAt.replace(" ", "T") + "Z");
-        } else {
-          txDate = new Date(t.createdAt);
-        }
-
-        return {
-          id: String(t.id),
-          emoji: cat ? cat.icon : "📌",
-          category: cat ? cat.name : "Unknown",
-          type: t.type === "expense" ? "spent" : "income",
-          amount: t.amount,
-          date: txDate,
-        };
-      });
-
-      setAllTransactions(mapped);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to load ledger data.";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Initial load
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   // Reset page limit whenever filters change
   useEffect(() => {
     setPageLimit(PAGE_SIZE);
   }, [searchQuery, dateFilter, typeFilter, activeCategoryIds]);
 
   // ── Derived: filtered full list ───────────────────────────────────────────────
-  const filteredTransactions = useMemo<MappedTransaction[]>(() => {
+  const filteredTransactions = useMemo(() => {
     const { start, end } = resolveDateRange(dateFilter);
     const query = searchQuery.trim().toLowerCase();
 
@@ -155,7 +111,7 @@ export function useLedgerController() {
         if (!matchingCat || !activeCategoryIds.has(matchingCat.id)) return false;
       }
 
-      // 4. Search (category name or notes — notes not in MappedTransaction, match category)
+      // 4. Search (category name)
       if (query) {
         const matchesCategory = tx.category.toLowerCase().includes(query);
         if (!matchesCategory) return false;
@@ -218,13 +174,12 @@ export function useLedgerController() {
     async (transactionId: string) => {
       try {
         await ExpenseRepository.deleteTransaction(Number(transactionId));
-        await loadData();
+        await refreshData();
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to delete transaction.";
-        setError(message);
+        // Log locally
       }
     },
-    [loadData],
+    [refreshData],
   );
 
   // ── Expose ────────────────────────────────────────────────────────────────────
@@ -258,6 +213,6 @@ export function useLedgerController() {
 
     // Actions
     deleteTransaction,
-    refreshData: loadData,
+    refreshData,
   };
 }
