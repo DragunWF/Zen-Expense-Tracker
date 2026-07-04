@@ -21,11 +21,19 @@
     "web": {
       "favicon": "./assets/icon.png"
     },
-    "plugins": ["expo-sqlite"],
+    "plugins": [
+      "expo-sqlite"
+    ],
     "extra": {
       "eas": {
         "projectId": "e5bcec4f-f709-497b-a253-28454b484951"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e5bcec4f-f709-497b-a253-28454b484951"
     }
   }
 }
