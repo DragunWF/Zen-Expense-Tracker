@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { MappedTransaction } from "../../models/types";
-import TransactionItem from "./TransactionItem";
+import { MappedTransaction } from "../../../models/types";
+import TransactionItem from "../ui/TransactionItem";
 
 interface RecentActivityListProps {
   transactions: MappedTransaction[];

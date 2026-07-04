@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { Category } from "../../models/types";
+import { Category } from "../../../models/types";
 
 interface CategoryPillProps {
   category: Category;

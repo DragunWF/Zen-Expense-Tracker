@@ -1,9 +1,8 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { APP_CONFIG } from "../../core/constants";
-import { formatAmount, formatDate } from "../../core/helpers";
-
-import { MappedTransaction } from "../../models/types";
+import { APP_CONFIG } from "../../../core/constants";
+import { formatAmount, formatDate } from "../../../core/helpers";
+import { MappedTransaction } from "../../../models/types";
 
 interface TransactionItemProps {
   transaction: MappedTransaction;

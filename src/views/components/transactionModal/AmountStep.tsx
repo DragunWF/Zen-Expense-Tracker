@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
-import { APP_CONFIG } from "../../core/constants";
+import { APP_CONFIG } from "../../../core/constants";
 import TransactionTypeTabs from "./TransactionTypeTabs";
 
 type TransactionType = "spent" | "income";

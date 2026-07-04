@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Category } from "../../models/types";
+import { Category } from "../../../models/types";
 import AmountStep from "./AmountStep";
 import CategoryStep from "./CategoryStep";
 

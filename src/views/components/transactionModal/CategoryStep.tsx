@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, ScrollView, Alert } from "react-native";
-import { Category } from "../../models/types";
-import { APP_CONFIG } from "../../core/constants";
-import { formatAmount } from "../../core/helpers";
+import { Category } from "../../../models/types";
+import { APP_CONFIG } from "../../../core/constants";
+import { formatAmount } from "../../../core/helpers";
 import CategoryPill from "./CategoryPill";
 import CategoryCreatorForm from "./CategoryCreatorForm";
 import IconPickerOverlay from "./IconPickerOverlay";
@@ -28,16 +28,11 @@ export default function CategoryStep({
 }: CategoryStepProps) {
   // Category inline creation & edit states
   const [showNewCatInput, setShowNewCatInput] = useState<boolean>(false);
-  const [newCategoryName, setNewCategoryName] = useState<string>(FormatCategoryName(""));
+  const [newCategoryName, setNewCategoryName] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("📌");
   const [showIconPicker, setShowIconPicker] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
-  // Helper helper to handle React type-safe state setter
-  function FormatCategoryName(name: string) {
-    return name;
-  }
 
   const handleSaveCategory = useCallback(async () => {
     const trimmed = newCategoryName.trim();

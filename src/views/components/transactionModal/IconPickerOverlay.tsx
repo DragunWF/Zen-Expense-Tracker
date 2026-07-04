@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import { CATEGORY_ICONS } from "../../core/constants";
+import { CATEGORY_ICONS } from "../../../core/constants";
 
 interface IconPickerOverlayProps {
   visible: boolean;

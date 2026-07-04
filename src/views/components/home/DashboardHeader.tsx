@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Calendar, ChevronDown } from "lucide-react-native";
-import { DateFilterType } from "../../controllers/useExpenseController";
+import { DateFilterType } from "../../../controllers/useExpenseController";
 
 interface DashboardHeaderProps {
   activeDateFilter: DateFilterType;

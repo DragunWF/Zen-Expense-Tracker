@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
-import { APP_CONFIG } from "../../core/constants";
-import { formatAmount } from "../../core/helpers";
+import { APP_CONFIG } from "../../../core/constants";
+import { formatAmount } from "../../../core/helpers";
 
 interface SummaryCardProps {
   title: string;

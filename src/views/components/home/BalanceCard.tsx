@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
-import { APP_CONFIG } from "../../core/constants";
-import { formatAmount } from "../../core/helpers";
+import { APP_CONFIG } from "../../../core/constants";
+import { formatAmount } from "../../../core/helpers";
 
 interface BalanceCardProps {
   netProfit: number;
@@ -43,9 +43,7 @@ export default function BalanceCard({
             ? "••••••"
             : `${APP_CONFIG.currencySymbol}${formatAmount(netProfit)}`}
         </Text>
-        <View
-          className={`h-px w-16 ${isPositive ? "bg-emerald-500/30" : "bg-rose-500/30"} mt-3`}
-        />
+        <View className={`h-px w-16 ${isPositive ? "bg-emerald-500/30" : "bg-rose-500/30"} mt-3`} />
       </View>
     </View>
   );
