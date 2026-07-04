@@ -44,7 +44,9 @@ function validateBackupPayload(payload: unknown): BackupPayload {
   for (const tx of p.transactions as unknown[]) {
     const t = tx as Record<string, unknown>;
     if (t.amount === undefined || !t.type || !t.categoryId) {
-      throw new Error("Malformed transaction entry: missing amount, type, or categoryId.");
+      throw new Error(
+        "Malformed transaction entry: missing amount, type, or categoryId.",
+      );
     }
   }
 
@@ -158,12 +160,11 @@ export function useSettingsController() {
 
       const payload = validateBackupPayload(parsed);
 
-      // 4. Strip auto-increment IDs so the DB assigns new ones cleanly
-      const cats = payload.categories.map(({ id: _id, ...rest }) => rest);
-      const txs = payload.transactions.map(({ id: _id, ...rest }) => rest);
-
-      // 5. Atomic write inside a SQLite transaction
-      await ExpenseRepository.importData(cats, txs);
+      // 4. Atomic write inside a SQLite transaction (preserving original IDs)
+      await ExpenseRepository.importData(
+        payload.categories,
+        payload.transactions,
+      );
 
       // 6. Refresh global context so all screens update
       await refreshData();
@@ -207,7 +208,10 @@ export function useSettingsController() {
                       await refreshData();
                       flashSuccess("App data reset successfully.");
                     } catch {
-                      Alert.alert("Reset Failed", "Could not reset the database.");
+                      Alert.alert(
+                        "Reset Failed",
+                        "Could not reset the database.",
+                      );
                     } finally {
                       setIsBusy(false);
                     }
