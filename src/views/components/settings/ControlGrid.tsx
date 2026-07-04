@@ -31,7 +31,7 @@ function ActionCard({
       } ${disabled ? "opacity-50" : ""}`}
     >
       {/* Icon */}
-      <Text className="text-2xl">{emoji}</Text>
+      <Text className="text-6xl p-2">{emoji}</Text>
 
       {/* Text */}
       <View className="mt-auto">
@@ -72,22 +72,22 @@ export default function ControlGrid({
   return (
     <View className="mx-5 mb-4">
       <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">
-        System Controls
+        Controls
       </Text>
 
       {/* Row 1 */}
       <View className="flex-row gap-3 mb-3">
         <ActionCard
           emoji="📤"
-          label="Export Backup"
-          status="Ready"
+          label="Export Backup Data"
+          status="Creates a JSON file"
           onPress={onExport}
           disabled={isBusy}
         />
         <ActionCard
           emoji="📥"
-          label="Restore Import"
-          status="Paste JSON"
+          label="Import Backup Data"
+          status="Reads a JSON file"
           onPress={onImport}
           disabled={isBusy}
         />
@@ -97,13 +97,13 @@ export default function ControlGrid({
       <View className="flex-row gap-3">
         <ActionCard
           emoji="💼"
-          label="LinkedIn"
+          label="Developer LinkedIn"
           status="Redirect"
           onPress={onLinkedIn}
         />
         <ActionCard
           emoji="⚠️"
-          label="Reset Database"
+          label="Reset App Data"
           status="Danger"
           onPress={onReset}
           variant="danger"

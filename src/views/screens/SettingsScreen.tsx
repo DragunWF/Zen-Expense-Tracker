@@ -14,13 +14,10 @@ export default function SettingsScreen() {
     setIsExportModalOpen,
     isImportModalOpen,
     setIsImportModalOpen,
-    isStatsExpanded,
-    setIsStatsExpanded,
     isBusy,
     lastError,
     setLastError,
     lastSuccess,
-    dbStats,
     exportJson,
     buildExport,
     copyToClipboard,
@@ -40,10 +37,10 @@ export default function SettingsScreen() {
         {/* Screen header */}
         <View className="px-5 pt-4 pb-5">
           <Text className="text-slate-400 text-xs font-semibold uppercase tracking-widest">
-            Configuration
+            Settings Menu
           </Text>
           <Text className="text-slate-100 text-2xl font-bold mt-0.5">
-            System Config
+            App Config
           </Text>
         </View>
 
@@ -57,11 +54,7 @@ export default function SettingsScreen() {
         />
 
         {/* Developer bio card */}
-        <DevBioCard
-          isExpanded={isStatsExpanded}
-          onToggle={() => setIsStatsExpanded((p) => !p)}
-          dbStats={dbStats}
-        />
+        <DevBioCard />
 
         {/* Global success banner */}
         {lastSuccess && (
