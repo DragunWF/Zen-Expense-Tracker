@@ -5,23 +5,13 @@ import { StatusBar } from "expo-status-bar";
 import { useSettingsController } from "../../controllers/useSettingsController";
 import DevBioCard from "../components/settings/DevBioCard";
 import ControlGrid from "../components/settings/ControlGrid";
-import ExportModal from "../components/settings/ExportModal";
-import ImportModal from "../components/settings/ImportModal";
 
 export default function SettingsScreen() {
   const {
-    isExportModalOpen,
-    setIsExportModalOpen,
-    isImportModalOpen,
-    setIsImportModalOpen,
     isBusy,
-    lastError,
-    setLastError,
     lastSuccess,
-    exportJson,
-    buildExport,
-    copyToClipboard,
-    importFromJson,
+    exportToFile,
+    importFromFile,
     resetDatabase,
     openLinkedIn,
   } = useSettingsController();
@@ -46,8 +36,8 @@ export default function SettingsScreen() {
 
         {/* 2×2 Control Grid */}
         <ControlGrid
-          onExport={buildExport}
-          onImport={() => setIsImportModalOpen(true)}
+          onExport={exportToFile}
+          onImport={importFromFile}
           onLinkedIn={openLinkedIn}
           onReset={resetDatabase}
           isBusy={isBusy}
@@ -65,25 +55,6 @@ export default function SettingsScreen() {
           </View>
         )}
       </ScrollView>
-
-      {/* Export modal */}
-      <ExportModal
-        visible={isExportModalOpen}
-        exportJson={exportJson}
-        onCopy={copyToClipboard}
-        onClose={() => setIsExportModalOpen(false)}
-        lastSuccess={lastSuccess}
-      />
-
-      {/* Import modal */}
-      <ImportModal
-        visible={isImportModalOpen}
-        isBusy={isBusy}
-        lastError={lastError}
-        onClearError={() => setLastError(null)}
-        onImport={importFromJson}
-        onClose={() => setIsImportModalOpen(false)}
-      />
     </SafeAreaView>
   );
 }

@@ -61,7 +61,14 @@ export default function IconPickerOverlay({
                   onPress={() => onSelectIcon(emoji)}
                   className="w-[17%] aspect-square items-center justify-center bg-slate-800 rounded-2xl active:bg-emerald-500/20 active:border active:border-emerald-500 border border-slate-700/30"
                 >
-                  <Text className="text-2xl">{emoji}</Text>
+                  <View className="flex-1 w-full h-full items-center justify-center">
+                    <Text
+                      style={{ includeFontPadding: false }}
+                      className="text-3xl text-center"
+                    >
+                      {emoji}
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </View>

@@ -13,22 +13,13 @@ export const ExpenseRepository = {
       const defaultCategories: Omit<Category, "id">[] = [
         // Expense Categories
         { name: "Food", icon: "🍔", type: "expense" },
-        { name: "Transport", icon: "🚗", type: "expense" },
-        { name: "Utilities", icon: "⚡", type: "expense" },
-        { name: "Entertainment", icon: "🎬", type: "expense" },
-        { name: "Shopping", icon: "🛍️", type: "expense" },
-        { name: "Health", icon: "💊", type: "expense" },
+        { name: "Transportation", icon: "🚗", type: "expense" },
+        { name: "Other", icon: "📦", type: "expense" },
 
         // Income Categories
         { name: "Salary", icon: "💼", type: "income" },
-        { name: "Freelance", icon: "💻", type: "income" },
-        { name: "Investments", icon: "📈", type: "income" },
-        { name: "Gifts", icon: "🎁", type: "income" },
-        { name: "Side Hustle", icon: "🚀", type: "income" },
-        { name: "Rental", icon: "🏠", type: "income" },
-
-        // System Default Fallbacks
-        { name: "Other", icon: "📦", type: "expense" },
+        { name: "Allowance", icon: "💵", type: "income" },
+        { name: "Bonus", icon: "🎁", type: "income" },
         { name: "Other", icon: "📦", type: "income" },
       ];
 
@@ -119,23 +110,21 @@ export const ExpenseRepository = {
 
   // Delete a single transaction by its ID
   async deleteTransaction(transactionId: number): Promise<void> {
-    await db
-      .delete(transactions)
-      .where(eq(transactions.id, transactionId));
+    await db.delete(transactions).where(eq(transactions.id, transactionId));
   },
 
   // Export: return raw rows for serialization
-  async exportData(): Promise<{ categories: Category[]; transactions: Transaction[] }> {
+  async exportData(): Promise<{
+    categories: Category[];
+    transactions: Transaction[];
+  }> {
     const cats = await db.select().from(categories);
     const txs = await db.select().from(transactions);
     return { categories: cats, transactions: txs };
   },
 
-  // Import: atomically wipe and rewrite both tables
-  async importData(
-    cats: Omit<Category, "id">[],
-    txs: Array<Omit<Transaction, "id">>,
-  ): Promise<void> {
+  // Import: atomically wipe and rewrite both tables preserving original IDs
+  async importData(cats: Category[], txs: Transaction[]): Promise<void> {
     await db.transaction(async (trx) => {
       // Wipe in dependency order (transactions reference categories)
       await trx.delete(transactions);
@@ -148,19 +137,15 @@ export const ExpenseRepository = {
   // Reset: wipe all data and re-seed default categories
   async resetDatabase(): Promise<void> {
     const defaultCategories: Omit<Category, "id">[] = [
+      // Expense Categories
       { name: "Food", icon: "🍔", type: "expense" },
-      { name: "Transport", icon: "🚗", type: "expense" },
-      { name: "Utilities", icon: "⚡", type: "expense" },
-      { name: "Entertainment", icon: "🎬", type: "expense" },
-      { name: "Shopping", icon: "🛍️", type: "expense" },
-      { name: "Health", icon: "💊", type: "expense" },
-      { name: "Salary", icon: "💼", type: "income" },
-      { name: "Freelance", icon: "💻", type: "income" },
-      { name: "Investments", icon: "📈", type: "income" },
-      { name: "Gifts", icon: "🎁", type: "income" },
-      { name: "Side Hustle", icon: "🚀", type: "income" },
-      { name: "Rental", icon: "🏠", type: "income" },
+      { name: "Transportation", icon: "🚗", type: "expense" },
       { name: "Other", icon: "📦", type: "expense" },
+
+      // Income Categories
+      { name: "Salary", icon: "💼", type: "income" },
+      { name: "Allowance", icon: "💵", type: "income" },
+      { name: "Bonus", icon: "🎁", type: "income" },
       { name: "Other", icon: "📦", type: "income" },
     ];
 
@@ -171,4 +156,3 @@ export const ExpenseRepository = {
     });
   },
 };
-
