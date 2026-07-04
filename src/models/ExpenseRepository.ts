@@ -116,4 +116,11 @@ export const ExpenseRepository = {
       .set({ name, icon })
       .where(eq(categories.id, id));
   },
+
+  // Delete a single transaction by its ID
+  async deleteTransaction(transactionId: number): Promise<void> {
+    await db
+      .delete(transactions)
+      .where(eq(transactions.id, transactionId));
+  },
 };

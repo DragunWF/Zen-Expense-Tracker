@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { APP_CONFIG } from "../../../core/constants";
 import { formatAmount, formatDate } from "../../../core/helpers";
 import { MappedTransaction } from "../../../models/types";
@@ -7,11 +7,13 @@ import { MappedTransaction } from "../../../models/types";
 interface TransactionItemProps {
   transaction: MappedTransaction;
   isLast: boolean;
+  onDelete?: (id: string) => void;
 }
 
 export default function TransactionItem({
   transaction,
   isLast,
+  onDelete,
 }: TransactionItemProps) {
   const isIncome = transaction.type === "income";
 
@@ -46,6 +48,20 @@ export default function TransactionItem({
         {APP_CONFIG.currencySymbol}
         {formatAmount(transaction.amount)}
       </Text>
+
+      {/* Optional delete button */}
+      {onDelete && (
+        <Pressable
+          onPress={() => onDelete(transaction.id)}
+          hitSlop={8}
+          className="ml-3 w-7 h-7 rounded-lg bg-slate-700/60 active:bg-rose-500/20 items-center justify-center border border-slate-600"
+        >
+          <Text className="text-rose-400 text-xs font-bold leading-none">
+            ×
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
+
