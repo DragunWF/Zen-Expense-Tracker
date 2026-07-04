@@ -45,14 +45,18 @@ export default function DevBioCard({
 
         {/* Tech stack badges */}
         <View className="flex-row flex-wrap gap-1.5 mb-3">
-          {["Expo", "SQLite", "Drizzle", "NativeWind", "React Native"].map((tech) => (
-            <View
-              key={tech}
-              className="bg-slate-700/80 border border-slate-600/40 px-2 py-0.5 rounded-full"
-            >
-              <Text className="text-slate-400 text-[9px] font-medium">{tech}</Text>
-            </View>
-          ))}
+          {["Expo", "SQLite", "Drizzle", "NativeWind", "React Native"].map(
+            (tech) => (
+              <View
+                key={tech}
+                className="bg-slate-700/80 border border-slate-600/40 px-2 py-0.5 rounded-full"
+              >
+                <Text className="text-slate-400 text-[9px] font-medium">
+                  {tech}
+                </Text>
+              </View>
+            ),
+          )}
         </View>
 
         {/* Expand/Collapse database stats */}
@@ -76,14 +80,18 @@ export default function DevBioCard({
                 <Text className="text-emerald-400 text-base font-bold">
                   {dbStats.transactionCount}
                 </Text>
-                <Text className="text-slate-500 text-[10px] mt-0.5">Transactions</Text>
+                <Text className="text-slate-500 text-[10px] mt-0.5">
+                  Transactions
+                </Text>
               </View>
               <View className="w-px bg-slate-700/60" />
               <View className="items-center flex-1">
                 <Text className="text-slate-100 text-base font-bold">
                   {dbStats.categoryCount}
                 </Text>
-                <Text className="text-slate-500 text-[10px] mt-0.5">Categories</Text>
+                <Text className="text-slate-500 text-[10px] mt-0.5">
+                  Categories
+                </Text>
               </View>
             </View>
             <View className="h-px bg-slate-700/40 mb-2" />
@@ -92,14 +100,18 @@ export default function DevBioCard({
                 <Text className="text-rose-400 text-xs font-bold">
                   {dbStats.formattedSpent}
                 </Text>
-                <Text className="text-slate-500 text-[10px] mt-0.5">Total Spent</Text>
+                <Text className="text-slate-500 text-[10px] mt-0.5">
+                  Total Spent
+                </Text>
               </View>
               <View className="w-px bg-slate-700/60" />
               <View className="items-center flex-1">
                 <Text className="text-emerald-400 text-xs font-bold">
                   {dbStats.formattedIncome}
                 </Text>
-                <Text className="text-slate-500 text-[10px] mt-0.5">Total Income</Text>
+                <Text className="text-slate-500 text-[10px] mt-0.5">
+                  Total Income
+                </Text>
               </View>
             </View>
           </View>

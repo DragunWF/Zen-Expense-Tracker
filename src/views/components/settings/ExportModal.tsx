@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  ScrollView,
-} from "react-native";
+import { View, Text, Pressable, Modal, ScrollView } from "react-native";
 
 interface ExportModalProps {
   visible: boolean;
@@ -33,7 +27,9 @@ export default function ExportModal({
       <Pressable className="flex-1 bg-black/60 justify-end" onPress={onClose}>
         <Pressable
           className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50 h-[560px] flex flex-col"
-          onPress={() => {/* swallow */}}
+          onPress={() => {
+            /* swallow */
+          }}
         >
           {/* Drag handle */}
           <View className="w-10 h-1 rounded-full bg-slate-700 self-center mb-5" />
@@ -41,7 +37,9 @@ export default function ExportModal({
           {/* Header */}
           <View className="flex-row items-center justify-between mb-4">
             <View>
-              <Text className="text-slate-100 text-lg font-bold">Export Backup</Text>
+              <Text className="text-slate-100 text-lg font-bold">
+                Export Backup
+              </Text>
               <Text className="text-slate-500 text-xs mt-0.5">
                 Copy this JSON and save it somewhere safe.
               </Text>
@@ -50,7 +48,9 @@ export default function ExportModal({
               onPress={onClose}
               className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700/50 active:bg-slate-700"
             >
-              <Text className="text-slate-300 text-xs font-semibold">Close</Text>
+              <Text className="text-slate-300 text-xs font-semibold">
+                Close
+              </Text>
             </Pressable>
           </View>
 

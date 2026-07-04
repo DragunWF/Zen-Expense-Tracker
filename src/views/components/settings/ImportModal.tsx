@@ -48,10 +48,15 @@ export default function ImportModal({
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <Pressable className="flex-1 bg-black/60 justify-end" onPress={handleClose}>
+      <Pressable
+        className="flex-1 bg-black/60 justify-end"
+        onPress={handleClose}
+      >
         <Pressable
           className="bg-slate-900 rounded-t-3xl px-5 pt-3 pb-10 border-t border-slate-700/50 h-[520px] flex flex-col"
-          onPress={() => {/* swallow */}}
+          onPress={() => {
+            /* swallow */
+          }}
         >
           {/* Drag handle */}
           <View className="w-10 h-1 rounded-full bg-slate-700 self-center mb-5" />
@@ -59,7 +64,9 @@ export default function ImportModal({
           {/* Header */}
           <View className="flex-row items-center justify-between mb-4">
             <View>
-              <Text className="text-slate-100 text-lg font-bold">Restore Backup</Text>
+              <Text className="text-slate-100 text-lg font-bold">
+                Restore Backup
+              </Text>
               <Text className="text-slate-500 text-xs mt-0.5">
                 Paste your JSON backup below.
               </Text>
@@ -68,7 +75,9 @@ export default function ImportModal({
               onPress={handleClose}
               className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700/50 active:bg-slate-700"
             >
-              <Text className="text-slate-300 text-xs font-semibold">Cancel</Text>
+              <Text className="text-slate-300 text-xs font-semibold">
+                Cancel
+              </Text>
             </Pressable>
           </View>
 
