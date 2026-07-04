@@ -56,7 +56,12 @@ Before generating code, you must read the application documentation:
 
 To maintain idiomatic code that supports rapid data entry, you must follow these absolute constraints:
 
-- **Strict Component Modularity:** When implementing new features, views, or UI elements, never build massive, monolithic screen files. You must aggressively break down interfaces into isolated, highly reusable components within `src/views/components/` (e.g., custom buttons, category pills, balance cards) to keep the presentation layer modular and maintainable.
+- **Strict Component Modularity & Organization:** When implementing new features, views, or UI elements, never build massive, monolithic screen or component files. You must aggressively break down interfaces into isolated, modular sub-components and organize them into specific subdirectories within `src/views/components/`:
+  - `home/` for home/dashboard specific components.
+  - `transactionModal/` for transaction modal specific components.
+  - `ui/` for cross-screen reusable components (like `SummaryCard`, custom inputs, etc.).
+  - Other feature-specific subdirectories as the application grows.
+    Ensure parent components/screens act primarily as layout orchestrators that manage state flow and delegate visual steps/views to sub-components. This prevents the accumulation of monolithic files and ensures code remains clean, separated, and modular.
 - **No DOM Elements:** Explicitly forbidden to use HTML tags (`<div>`, `<span>`, `<p>`). You must enforce the use of React Native primitives (`<View>`, `<Text>`, `<Pressable>`).
 - **Offline-First Mandate:** Never write standard REST API `fetch` calls unless explicitly requested. All data operations must default to the local SQLite `ExpenseRepository`.
 - **Styling Exclusivity:** Inline styling (`style={{...}}`) and `StyleSheet.create` are strictly forbidden. Require all visual layouts to utilize Tailwind utility classes via NativeWind.
