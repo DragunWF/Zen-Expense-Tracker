@@ -22,3 +22,15 @@ export interface MappedTransaction {
   amount: number;
   date: Date;
 }
+
+export interface UserPreference {
+  key: string;
+  value: string;
+}
+
+export interface HomePreferences {
+  activeDateFilter: "today" | "last_7_days" | "month" | "year" | "all_time";
+  isProfitHidden: boolean;
+  isIncomeHidden: boolean;
+  isExpensesHidden: boolean;
+}

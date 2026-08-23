@@ -22,3 +22,9 @@ export const transactions = sqliteTable("transactions", {
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
 });
+
+// --- USER PREFERENCES TABLE ---
+export const userPreferences = sqliteTable("user_preferences", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});
