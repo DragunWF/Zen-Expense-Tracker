@@ -60,6 +60,14 @@ export const ExpenseRepository = {
     return inserted;
   },
 
+  // Update an existing transaction
+  async updateTransaction(
+    id: number,
+    updates: { amount?: number; categoryId?: number; createdAt?: string },
+  ): Promise<void> {
+    await db.update(transactions).set(updates).where(eq(transactions.id, id));
+  },
+
   // Delete a category and fallback its transactions to "Other"
   async deleteCategory(categoryId: number): Promise<void> {
     const allCategories = await db.select().from(categories);

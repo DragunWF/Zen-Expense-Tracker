@@ -8,12 +8,14 @@ interface TransactionItemProps {
   transaction: MappedTransaction;
   isLast: boolean;
   onDelete?: (id: string) => void;
+  onEdit?: (transaction: MappedTransaction) => void;
 }
 
 export default function TransactionItem({
   transaction,
   isLast,
   onDelete,
+  onEdit,
 }: TransactionItemProps) {
   const isIncome = transaction.type === "income";
 
@@ -49,12 +51,25 @@ export default function TransactionItem({
         {formatAmount(transaction.amount)}
       </Text>
 
+      {/* Optional Edit button */}
+      {onEdit && (
+        <Pressable
+          onPress={() => onEdit(transaction)}
+          hitSlop={8}
+          className="ml-3 w-7 h-7 rounded-lg bg-slate-700/60 active:bg-emerald-500/20 items-center justify-center border border-slate-600"
+        >
+          <Text className="text-emerald-400 text-xs font-bold leading-none">
+            ✏️
+          </Text>
+        </Pressable>
+      )}
+
       {/* Optional delete button */}
       {onDelete && (
         <Pressable
           onPress={() => onDelete(transaction.id)}
           hitSlop={8}
-          className="ml-3 w-7 h-7 rounded-lg bg-slate-700/60 active:bg-rose-500/20 items-center justify-center border border-slate-600"
+          className="ml-2 w-7 h-7 rounded-lg bg-slate-700/60 active:bg-rose-500/20 items-center justify-center border border-slate-600"
         >
           <Text className="text-rose-400 text-xs font-bold leading-none">
             ×
@@ -64,4 +79,3 @@ export default function TransactionItem({
     </View>
   );
 }
-

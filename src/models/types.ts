@@ -18,6 +18,7 @@ export interface MappedTransaction {
   id: string;
   emoji: string;
   category: string;
+  categoryId: number;
   type: "spent" | "income";
   amount: number;
   date: Date;

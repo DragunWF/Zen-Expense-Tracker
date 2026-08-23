@@ -94,6 +94,7 @@ export function useExpenseController() {
           id: String(t.id),
           emoji: cat ? cat.icon : "📌",
           category: cat ? cat.name : "Unknown",
+          categoryId: t.categoryId,
           type: t.type === "expense" ? "spent" : "income",
           amount: t.amount,
           date: txDate,
@@ -189,6 +190,25 @@ export function useExpenseController() {
     [loadData],
   );
 
+  // Edit an existing transaction
+  const editTransaction = useCallback(
+    async (id: string, amount: number, categoryId: number, date: Date) => {
+      try {
+        const isoString = date.toISOString();
+        const createdAt = isoString.replace("T", " ").slice(0, 19);
+        await ExpenseRepository.updateTransaction(Number(id), {
+          amount,
+          categoryId,
+          createdAt,
+        });
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to edit transaction.");
+      }
+    },
+    [loadData],
+  );
+
   // Add a new custom category
   const addCategory = useCallback(
     async (name: string, icon: string, type: "spent" | "income") => {
@@ -248,6 +268,7 @@ export function useExpenseController() {
     loading,
     error,
     logTransaction,
+    editTransaction,
     addCategory,
     updateCategory,
     deleteCategory,
