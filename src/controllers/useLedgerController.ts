@@ -72,6 +72,7 @@ export function useLedgerController() {
     loading,
     error,
     refreshData,
+    editTransaction,
   } = useExpense();
 
   // ── Filter states ────────────────────────────────────────────────────────────
@@ -213,6 +214,7 @@ export function useLedgerController() {
 
     // Actions
     deleteTransaction,
+    editTransaction,
     refreshData,
   };
 }

@@ -1,7 +1,7 @@
 import { db } from "../core/database";
-import { categories, transactions } from "./schema";
+import { categories, transactions, userPreferences } from "./schema";
 import { eq, desc } from "drizzle-orm";
-import { Category, Transaction } from "./types";
+import { Category, Transaction, HomePreferences } from "./types";
 
 export const ExpenseRepository = {
   // Fetch all categories, optionally filtered by type
@@ -58,6 +58,14 @@ export const ExpenseRepository = {
       })
       .returning();
     return inserted;
+  },
+
+  // Update an existing transaction
+  async updateTransaction(
+    id: number,
+    updates: { amount?: number; categoryId?: number; createdAt?: string },
+  ): Promise<void> {
+    await db.update(transactions).set(updates).where(eq(transactions.id, id));
   },
 
   // Delete a category and fallback its transactions to "Other"
@@ -154,5 +162,65 @@ export const ExpenseRepository = {
       await trx.delete(categories);
       await trx.insert(categories).values(defaultCategories);
     });
+  },
+
+  // --- Preferences ---
+  async getPreference(key: string, defaultValue: string): Promise<string> {
+    const result = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.key, key));
+    return result.length > 0 ? result[0].value : defaultValue;
+  },
+
+  async setPreference(key: string, value: string): Promise<void> {
+    await db.insert(userPreferences).values({ key, value }).onConflictDoUpdate({
+      target: userPreferences.key,
+      set: { value },
+    });
+  },
+
+  async getHomePreferences(): Promise<HomePreferences> {
+    const activeDateFilter = (await this.getPreference(
+      "home_date_filter",
+      "month",
+    )) as HomePreferences["activeDateFilter"];
+    const isProfitHidden =
+      (await this.getPreference("home_is_profit_hidden", "false")) === "true";
+    const isIncomeHidden =
+      (await this.getPreference("home_is_income_hidden", "false")) === "true";
+    const isExpensesHidden =
+      (await this.getPreference("home_is_expenses_hidden", "false")) === "true";
+
+    return {
+      activeDateFilter,
+      isProfitHidden,
+      isIncomeHidden,
+      isExpensesHidden,
+    };
+  },
+
+  async setHomePreference(
+    key: keyof HomePreferences,
+    value: string,
+  ): Promise<void> {
+    let dbKey = "";
+    switch (key) {
+      case "activeDateFilter":
+        dbKey = "home_date_filter";
+        break;
+      case "isProfitHidden":
+        dbKey = "home_is_profit_hidden";
+        break;
+      case "isIncomeHidden":
+        dbKey = "home_is_income_hidden";
+        break;
+      case "isExpensesHidden":
+        dbKey = "home_is_expenses_hidden";
+        break;
+    }
+    if (dbKey) {
+      await this.setPreference(dbKey, value);
+    }
   },
 };

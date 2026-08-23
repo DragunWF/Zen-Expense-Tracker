@@ -25,15 +25,32 @@ export function useExpenseController() {
     useState<DateFilterType>("month");
 
   const toggleProfitVisibility = useCallback(() => {
-    setIsProfitHidden((prev) => !prev);
+    setIsProfitHidden((prev) => {
+      const next = !prev;
+      ExpenseRepository.setHomePreference("isProfitHidden", String(next)).catch(console.error);
+      return next;
+    });
   }, []);
 
   const toggleIncomeVisibility = useCallback(() => {
-    setIsIncomeHidden((prev) => !prev);
+    setIsIncomeHidden((prev) => {
+      const next = !prev;
+      ExpenseRepository.setHomePreference("isIncomeHidden", String(next)).catch(console.error);
+      return next;
+    });
   }, []);
 
   const toggleExpensesVisibility = useCallback(() => {
-    setIsExpensesHidden((prev) => !prev);
+    setIsExpensesHidden((prev) => {
+      const next = !prev;
+      ExpenseRepository.setHomePreference("isExpensesHidden", String(next)).catch(console.error);
+      return next;
+    });
+  }, []);
+
+  const setDateFilter = useCallback((filter: DateFilterType) => {
+    setActiveDateFilter(filter);
+    ExpenseRepository.setHomePreference("activeDateFilter", filter).catch(console.error);
   }, []);
 
   // Load all categories and transactions, mapping database items to presentation items
@@ -41,12 +58,18 @@ export function useExpenseController() {
     setLoading(true);
     setError(null);
     try {
-      const [cats, txs] = await Promise.all([
+      const [cats, txs, prefs] = await Promise.all([
         ExpenseRepository.getCategories(),
         ExpenseRepository.getTransactions(),
+        ExpenseRepository.getHomePreferences(),
       ]);
 
       setCategories(cats);
+
+      setActiveDateFilter(prefs.activeDateFilter as DateFilterType);
+      setIsProfitHidden(prefs.isProfitHidden);
+      setIsIncomeHidden(prefs.isIncomeHidden);
+      setIsExpensesHidden(prefs.isExpensesHidden);
 
       // Map raw Transaction objects (integer IDs, expense/income types)
       // to UI-ready MappedTransaction objects (string IDs, spent/income types, categories, emojis)
@@ -71,6 +94,7 @@ export function useExpenseController() {
           id: String(t.id),
           emoji: cat ? cat.icon : "📌",
           category: cat ? cat.name : "Unknown",
+          categoryId: t.categoryId,
           type: t.type === "expense" ? "spent" : "income",
           amount: t.amount,
           date: txDate,
@@ -166,6 +190,25 @@ export function useExpenseController() {
     [loadData],
   );
 
+  // Edit an existing transaction
+  const editTransaction = useCallback(
+    async (id: string, amount: number, categoryId: number, date: Date) => {
+      try {
+        const isoString = date.toISOString();
+        const createdAt = isoString.replace("T", " ").slice(0, 19);
+        await ExpenseRepository.updateTransaction(Number(id), {
+          amount,
+          categoryId,
+          createdAt,
+        });
+        await loadData();
+      } catch (err: any) {
+        setError(err.message || "Failed to edit transaction.");
+      }
+    },
+    [loadData],
+  );
+
   // Add a new custom category
   const addCategory = useCallback(
     async (name: string, icon: string, type: "spent" | "income") => {
@@ -225,6 +268,7 @@ export function useExpenseController() {
     loading,
     error,
     logTransaction,
+    editTransaction,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -236,7 +280,7 @@ export function useExpenseController() {
     toggleIncomeVisibility,
     toggleExpensesVisibility,
     activeDateFilter,
-    setDateFilter: setActiveDateFilter,
+    setDateFilter,
     filteredTransactions,
   };
 }

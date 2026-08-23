@@ -1,11 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  FlatList,
-  Alert,
-} from "react-native";
+import { View, Text, Pressable, FlatList, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import {
@@ -13,11 +7,13 @@ import {
   LedgerTypeFilter,
 } from "../../controllers/useLedgerController";
 import { MappedTransaction } from "../../models/types";
+import { useExpense } from "../../controllers/useExpenseController";
 import LedgerHeader from "../components/ledger/LedgerHeader";
 import LedgerDateFilterDropdown from "../components/ledger/LedgerDateFilterDropdown";
 import LedgerStatsCard from "../components/ledger/LedgerStatsCard";
 import CategoryFilterSheet from "../components/ledger/CategoryFilterSheet";
 import TransactionItem from "../components/ui/TransactionItem";
+import EditTransactionModal from "../components/transactionModal/EditTransactionModal";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -76,10 +72,22 @@ export default function LedgerScreen() {
     totalIncome,
     totalExpenses,
     deleteTransaction,
+    editTransaction,
   } = useLedgerController();
 
+  const {
+    spentCategories,
+    incomeCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory: deleteCategoryFromDb,
+  } = useExpense();
+
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState<boolean>(false);
-  const [isCategorySheetOpen, setIsCategorySheetOpen] = useState<boolean>(false);
+  const [isCategorySheetOpen, setIsCategorySheetOpen] =
+    useState<boolean>(false);
+  const [editingTransaction, setEditingTransaction] =
+    useState<MappedTransaction | null>(null);
 
   // ── Build grouped FlatList data ───────────────────────────────────────────
   const flatListData = useMemo<ListItem[]>(() => {
@@ -116,6 +124,10 @@ export default function LedgerScreen() {
     [deleteTransaction],
   );
 
+  const handleEditTransaction = useCallback((tx: MappedTransaction) => {
+    setEditingTransaction(tx);
+  }, []);
+
   const renderItem = useCallback(
     ({ item, index }: { item: ListItem; index: number }) => {
       if (item.type === "header") {
@@ -138,6 +150,7 @@ export default function LedgerScreen() {
             transaction={item.transaction}
             isLast={isLast}
             onDelete={handleDeleteTransaction}
+            onEdit={handleEditTransaction}
           />
         </View>
       );
@@ -158,9 +171,7 @@ export default function LedgerScreen() {
         onPress={loadMore}
         className="mx-5 mt-4 mb-6 py-3.5 rounded-2xl bg-slate-800 border border-slate-700/50 active:bg-slate-700/60 items-center"
       >
-        <Text className="text-slate-300 font-semibold text-sm">
-          Load More
-        </Text>
+        <Text className="text-slate-300 font-semibold text-sm">Load More</Text>
         <Text className="text-slate-500 text-xs mt-0.5">
           {visibleCount} of {totalCount} shown
         </Text>
@@ -312,6 +323,22 @@ export default function LedgerScreen() {
         onToggleCategory={toggleCategoryFilter}
         onClearAll={clearCategoryFilters}
         onClose={() => setIsCategorySheetOpen(false)}
+      />
+
+      {/* Edit Transaction Modal */}
+      <EditTransactionModal
+        visible={!!editingTransaction}
+        transaction={editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        categories={
+          editingTransaction?.type === "spent"
+            ? spentCategories
+            : incomeCategories
+        }
+        onAddCategory={addCategory}
+        onUpdateCategory={updateCategory}
+        onDeleteCategory={deleteCategoryFromDb}
+        onEditTransaction={editTransaction}
       />
     </SafeAreaView>
   );
