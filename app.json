@@ -22,7 +22,9 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
