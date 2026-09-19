@@ -6,7 +6,7 @@ interface OperatorBarProps {
 }
 
 export default function OperatorBar({ onPressOperator }: OperatorBarProps) {
-  const operators = ["+", "-", "*", "/", "(", ")"];
+  const operators = ["+", "-", "*", "/"];
 
   return (
     <View className="flex-row justify-center items-center gap-2 mb-4">

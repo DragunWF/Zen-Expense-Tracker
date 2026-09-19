@@ -63,7 +63,7 @@ export default function EditTransactionModal({
   // Derived properties
   const parsedAmount = safeEvaluate(amount);
   const amountIsValid = parsedAmount !== null && parsedAmount > 0;
-  const showPreview = amount.length > 0 && /[+\-*/()]/.test(amount);
+  const showPreview = amount.length > 0 && /[+\-*/]/.test(amount);
 
   const handleOperatorPress = (op: string) => {
     const s = selection.start || amount.length;

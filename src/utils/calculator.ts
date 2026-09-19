@@ -1,6 +1,6 @@
 /**
  * Safely evaluates a mathematical expression string.
- * Supports +, -, *, /, ., and ()
+ * Supports +, -, *, /, and .
  * Avoids using eval() or new Function().
  * Returns null if the expression is invalid, incomplete, or contains division by zero.
  */
@@ -20,7 +20,7 @@ export function safeEvaluate(expression: string): number | null {
 
     if (/[0-9.]/.test(char)) {
       numStr += char;
-    } else if (/[+\-*/()]/.test(char)) {
+    } else if (/[+\-*/]/.test(char)) {
       if (numStr) {
         if (numStr === "-") {
           return null; // Invalid standalone minus
@@ -35,15 +35,10 @@ export function safeEvaluate(expression: string): number | null {
 
       if (char === "-") {
         const prev = tokens.length > 0 ? tokens[tokens.length - 1] : null;
-        if (!prev || ["+", "-", "*", "/", "("].includes(prev)) {
+        if (!prev || ["+", "-", "*", "/"].includes(prev)) {
           // Unary minus detected
-          if (expr[i + 1] === "(") {
-            tokens.push("-1", "*");
-            continue;
-          } else {
-            numStr = "-";
-            continue;
-          }
+          numStr = "-";
+          continue;
         }
       }
 
@@ -61,15 +56,6 @@ export function safeEvaluate(expression: string): number | null {
   }
 
   if (tokens.length === 0) return null;
-
-  // Validate parentheses balance
-  let parenCount = 0;
-  for (const token of tokens) {
-    if (token === "(") parenCount++;
-    if (token === ")") parenCount--;
-    if (parenCount < 0) return null;
-  }
-  if (parenCount !== 0) return null;
 
   // Basic check for incomplete expression (ends with operator)
   const lastToken = tokens[tokens.length - 1];
@@ -91,21 +77,10 @@ export function safeEvaluate(expression: string): number | null {
 
     if (!isNaN(Number(token))) {
       outputQueue.push(token);
-    } else if (token === "(") {
-      operatorStack.push(token);
-    } else if (token === ")") {
-      while (
-        operatorStack.length > 0 &&
-        operatorStack[operatorStack.length - 1] !== "("
-      ) {
-        outputQueue.push(operatorStack.pop()!);
-      }
-      operatorStack.pop(); // Pop the "("
     } else {
       // Operator
       while (
         operatorStack.length > 0 &&
-        operatorStack[operatorStack.length - 1] !== "(" &&
         precedence[operatorStack[operatorStack.length - 1]] >= precedence[token]
       ) {
         outputQueue.push(operatorStack.pop()!);

@@ -42,7 +42,7 @@ export default function AmountStep({
   };
 
   const parsedPreview = safeEvaluate(amount);
-  const showPreview = amount.length > 0 && /[+\-*/()]/.test(amount);
+  const showPreview = amount.length > 0 && /[+\-*/]/.test(amount);
   return (
     <View>
       <Text className="text-slate-100 text-lg font-bold text-center mb-5">
