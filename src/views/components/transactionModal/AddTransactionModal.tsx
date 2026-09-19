@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { safeEvaluate } from "../../../utils/calculator";
 import {
   View,
   Pressable,
@@ -55,10 +56,11 @@ export default function AddTransactionModal({
   }, [visible]);
 
   // Derived properties
+  // Derived properties
   const currentCategories =
     activeTab === "spent" ? spentCategories : incomeCategories;
-  const parsedAmount = parseFloat(amount.replace(/,/g, ""));
-  const amountIsValid = !isNaN(parsedAmount) && parsedAmount > 0;
+  const parsedAmount = safeEvaluate(amount);
+  const amountIsValid = parsedAmount !== null && parsedAmount > 0;
 
   // Handlers
   const handleTabChange = useCallback((tab: TransactionType) => {
@@ -67,7 +69,7 @@ export default function AddTransactionModal({
 
   const handleLogTransaction = useCallback(
     async (category: Category) => {
-      if (!amountIsValid) return;
+      if (!amountIsValid || parsedAmount === null) return;
       await onLogTransaction(parsedAmount, activeTab, category.id);
       onClose();
     },
@@ -110,7 +112,7 @@ export default function AddTransactionModal({
             )}
 
             {/* STEP 2 — Category Selector */}
-            {modalStep === 2 && (
+            {modalStep === 2 && parsedAmount !== null && (
               <CategoryStep
                 categories={currentCategories}
                 parsedAmount={parsedAmount}
