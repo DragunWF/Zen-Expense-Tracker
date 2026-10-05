@@ -82,3 +82,9 @@ Follow these steps to run the application on your local machine and physical dev
 5.  **Connect your device:**
     - Open the Expo Go app on your phone.
     - Scan the QR code displayed in your terminal (or browser window) to launch Expense-Log.
+
+## Expo Deployment
+
+```sh
+eas update --branch production
+```
