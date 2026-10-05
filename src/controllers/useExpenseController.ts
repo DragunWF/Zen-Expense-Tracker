@@ -98,6 +98,7 @@ export function useExpenseController() {
           type: t.type === "expense" ? "spent" : "income",
           amount: t.amount,
           date: txDate,
+          notes: t.notes,
         };
       });
 
@@ -173,13 +174,13 @@ export function useExpenseController() {
 
   // Log a new transaction, mapping UI transaction types to schema categories
   const logTransaction = useCallback(
-    async (amount: number, type: "spent" | "income", categoryId: number) => {
+    async (amount: number, type: "spent" | "income", categoryId: number, notes: string | null = null) => {
       const dbType = type === "spent" ? "expense" : "income";
       try {
         await ExpenseRepository.insertTransaction({
           amount,
           type: dbType,
-          notes: null,
+          notes,
           categoryId,
         });
         await loadData();
@@ -192,7 +193,7 @@ export function useExpenseController() {
 
   // Edit an existing transaction
   const editTransaction = useCallback(
-    async (id: string, amount: number, categoryId: number, date: Date) => {
+    async (id: string, amount: number, categoryId: number, date: Date, notes: string | null = null) => {
       try {
         const isoString = date.toISOString();
         const createdAt = isoString.replace("T", " ").slice(0, 19);
@@ -200,6 +201,7 @@ export function useExpenseController() {
           amount,
           categoryId,
           createdAt,
+          notes,
         });
         await loadData();
       } catch (err: any) {

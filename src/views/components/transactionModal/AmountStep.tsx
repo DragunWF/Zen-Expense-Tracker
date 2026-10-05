@@ -4,6 +4,7 @@ import { APP_CONFIG } from "../../../core/constants";
 import TransactionTypeTabs from "./TransactionTypeTabs";
 import OperatorBar from "./OperatorBar";
 import { safeEvaluate } from "../../../utils/calculator";
+import QuickNoteTrigger from "./QuickNoteTrigger";
 
 type TransactionType = "spent" | "income";
 
@@ -14,6 +15,8 @@ interface AmountStepProps {
   onTabChange: (tab: TransactionType) => void;
   onNext: () => void;
   isValid: boolean;
+  note: string;
+  onNoteChange: (note: string) => void;
 }
 
 export default function AmountStep({
@@ -23,6 +26,8 @@ export default function AmountStep({
   onTabChange,
   onNext,
   isValid,
+  note,
+  onNoteChange,
 }: AmountStepProps) {
   const [selection, setSelection] = React.useState({ start: 0, end: 0 });
 
@@ -51,6 +56,10 @@ export default function AmountStep({
 
       {/* Segmented Control */}
       <TransactionTypeTabs activeTab={activeTab} onTabChange={onTabChange} />
+
+      <View className="mt-4 mb-2 z-10">
+        <QuickNoteTrigger note={note} onNoteChange={onNoteChange} />
+      </View>
 
       {/* Amount input */}
       <View className="items-center mb-8">

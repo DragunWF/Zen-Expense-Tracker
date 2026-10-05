@@ -14,6 +14,7 @@ import CategoryStep from "./CategoryStep";
 import CustomDatePicker from "../ui/CustomDatePicker";
 import OperatorBar from "./OperatorBar";
 import { safeEvaluate } from "../../../utils/calculator";
+import QuickNoteTrigger from "./QuickNoteTrigger";
 
 export interface EditTransactionModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export interface EditTransactionModalProps {
     amount: number,
     categoryId: number,
     date: Date,
+    notes: string | null,
   ) => Promise<void>;
   onDeleteCategory: (categoryId: number) => Promise<void>;
 }
@@ -47,6 +49,7 @@ export default function EditTransactionModal({
 }: EditTransactionModalProps) {
   // ── Step 1: amount & date ──
   const [amount, setAmount] = useState<string>("");
+  const [note, setNote] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [selection, setSelection] = useState({ start: 0, end: 0 });
@@ -55,6 +58,7 @@ export default function EditTransactionModal({
   useEffect(() => {
     if (visible && transaction) {
       setAmount(transaction.amount.toString());
+      setNote(transaction.notes || "");
       setDate(transaction.date);
       setModalStep(1);
     }
@@ -81,7 +85,8 @@ export default function EditTransactionModal({
   const handleEditTransaction = useCallback(
     async (category: Category) => {
       if (!amountIsValid || !transaction || parsedAmount === null) return;
-      await onEditTransaction(transaction.id, parsedAmount, category.id, date);
+      const trimmedNote = note.trim();
+      await onEditTransaction(transaction.id, parsedAmount, category.id, date, trimmedNote === "" ? null : trimmedNote);
       onClose();
     },
     [
@@ -89,6 +94,7 @@ export default function EditTransactionModal({
       parsedAmount,
       transaction,
       date,
+      note,
       onEditTransaction,
       onClose,
     ],
@@ -120,9 +126,13 @@ export default function EditTransactionModal({
             {/* STEP 1 — Amount & Date */}
             {modalStep === 1 && (
               <View>
-                <Text className="text-slate-100 text-lg font-bold text-center mb-5">
+                <Text className="text-slate-100 text-lg font-bold text-center mb-3">
                   Edit Transaction
                 </Text>
+
+                <View className="mb-2 z-10">
+                  <QuickNoteTrigger note={note} onNoteChange={setNote} />
+                </View>
 
                 {/* Amount input */}
                 <View className="items-center mb-4">

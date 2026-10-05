@@ -28,6 +28,7 @@ export interface AddTransactionModalProps {
     amount: number,
     type: TransactionType,
     categoryId: number,
+    notes: string | null,
   ) => Promise<void>;
   onDeleteCategory: (categoryId: number) => Promise<void>;
 }
@@ -44,6 +45,7 @@ export default function AddTransactionModal({
 }: AddTransactionModalProps) {
   // ── Step 1: amount & type ──
   const [amount, setAmount] = useState<string>("");
+  const [note, setNote] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TransactionType>("spent");
   const [modalStep, setModalStep] = useState<1 | 2>(1);
 
@@ -51,6 +53,7 @@ export default function AddTransactionModal({
   useEffect(() => {
     if (visible) {
       setAmount("");
+      setNote("");
       setModalStep(1);
     }
   }, [visible]);
@@ -70,10 +73,11 @@ export default function AddTransactionModal({
   const handleLogTransaction = useCallback(
     async (category: Category) => {
       if (!amountIsValid || parsedAmount === null) return;
-      await onLogTransaction(parsedAmount, activeTab, category.id);
+      const trimmedNote = note.trim();
+      await onLogTransaction(parsedAmount, activeTab, category.id, trimmedNote === "" ? null : trimmedNote);
       onClose();
     },
-    [amountIsValid, parsedAmount, activeTab, onLogTransaction, onClose],
+    [amountIsValid, parsedAmount, activeTab, note, onLogTransaction, onClose],
   );
 
   return (
@@ -108,6 +112,8 @@ export default function AddTransactionModal({
                 onTabChange={handleTabChange}
                 onNext={() => setModalStep(2)}
                 isValid={amountIsValid}
+                note={note}
+                onNoteChange={setNote}
               />
             )}
 
