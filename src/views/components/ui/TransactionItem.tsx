@@ -36,8 +36,11 @@ export default function TransactionItem({
           {transaction.category}
         </Text>
         {transaction.notes && (
-          <Text className="text-slate-400 text-xs mt-0.5 italic" numberOfLines={1}>
-            💬 {transaction.notes}
+          <Text
+            className="text-slate-400 text-xs mt-0.5 italic"
+            numberOfLines={1}
+          >
+            📝 {transaction.notes}
           </Text>
         )}
         <Text className="text-slate-500 text-xs mt-0.5">

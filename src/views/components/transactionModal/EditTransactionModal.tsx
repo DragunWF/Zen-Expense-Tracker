@@ -126,13 +126,9 @@ export default function EditTransactionModal({
             {/* STEP 1 — Amount & Date */}
             {modalStep === 1 && (
               <View>
-                <Text className="text-slate-100 text-lg font-bold text-center mb-3">
+                <Text className="text-slate-100 text-lg font-bold text-center mb-5">
                   Edit Transaction
                 </Text>
-
-                <View className="mb-2 z-10">
-                  <QuickNoteTrigger note={note} onNoteChange={setNote} />
-                </View>
 
                 {/* Amount input */}
                 <View className="items-center mb-4">
@@ -194,6 +190,8 @@ export default function EditTransactionModal({
                 }}
                 onUpdateCategory={onUpdateCategory}
                 onDeleteCategory={onDeleteCategory}
+                note={note}
+                onNoteChange={setNote}
               />
             )}
           </Pressable>

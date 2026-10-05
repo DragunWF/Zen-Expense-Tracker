@@ -112,8 +112,6 @@ export default function AddTransactionModal({
                 onTabChange={handleTabChange}
                 onNext={() => setModalStep(2)}
                 isValid={amountIsValid}
-                note={note}
-                onNoteChange={setNote}
               />
             )}
 
@@ -129,6 +127,8 @@ export default function AddTransactionModal({
                 }}
                 onUpdateCategory={onUpdateCategory}
                 onDeleteCategory={onDeleteCategory}
+                note={note}
+                onNoteChange={setNote}
               />
             )}
           </Pressable>
