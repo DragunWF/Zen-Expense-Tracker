@@ -63,7 +63,7 @@ export const ExpenseRepository = {
   // Update an existing transaction
   async updateTransaction(
     id: number,
-    updates: { amount?: number; categoryId?: number; createdAt?: string },
+    updates: { amount?: number; categoryId?: number; createdAt?: string; notes?: string | null },
   ): Promise<void> {
     await db.update(transactions).set(updates).where(eq(transactions.id, id));
   },

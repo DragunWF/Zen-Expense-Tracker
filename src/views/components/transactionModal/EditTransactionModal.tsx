@@ -12,6 +12,9 @@ import { Category, MappedTransaction } from "../../../models/types";
 import { APP_CONFIG } from "../../../core/constants";
 import CategoryStep from "./CategoryStep";
 import CustomDatePicker from "../ui/CustomDatePicker";
+import OperatorBar from "./OperatorBar";
+import { safeEvaluate } from "../../../utils/calculator";
+import QuickNoteTrigger from "./QuickNoteTrigger";
 
 export interface EditTransactionModalProps {
   visible: boolean;
@@ -29,6 +32,7 @@ export interface EditTransactionModalProps {
     amount: number,
     categoryId: number,
     date: Date,
+    notes: string | null,
   ) => Promise<void>;
   onDeleteCategory: (categoryId: number) => Promise<void>;
 }
@@ -45,27 +49,44 @@ export default function EditTransactionModal({
 }: EditTransactionModalProps) {
   // ── Step 1: amount & date ──
   const [amount, setAmount] = useState<string>("");
+  const [note, setNote] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [modalStep, setModalStep] = useState<1 | 2>(1);
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
 
   // Initialize form when modal becomes visible and transaction is present
   useEffect(() => {
     if (visible && transaction) {
       setAmount(transaction.amount.toString());
+      setNote(transaction.notes || "");
       setDate(transaction.date);
       setModalStep(1);
     }
   }, [visible, transaction]);
 
   // Derived properties
-  const parsedAmount = parseFloat(amount.replace(/,/g, ""));
-  const amountIsValid = !isNaN(parsedAmount) && parsedAmount > 0;
+  const parsedAmount = safeEvaluate(amount);
+  const amountIsValid = parsedAmount !== null && parsedAmount > 0;
+  const showPreview = amount.length > 0 && /[+\-*/]/.test(amount);
+
+  const handleOperatorPress = (op: string) => {
+    const s = selection.start || amount.length;
+    const e = selection.end || amount.length;
+    
+    const actualStart = (s === 0 && amount.length > 0) ? amount.length : s;
+    const actualEnd = (e === 0 && amount.length > 0) ? amount.length : e;
+
+    const before = amount.substring(0, actualStart);
+    const after = amount.substring(actualEnd);
+    setAmount(before + op + after);
+  };
 
   // Handlers
   const handleEditTransaction = useCallback(
     async (category: Category) => {
-      if (!amountIsValid || !transaction) return;
-      await onEditTransaction(transaction.id, parsedAmount, category.id, date);
+      if (!amountIsValid || !transaction || parsedAmount === null) return;
+      const trimmedNote = note.trim();
+      await onEditTransaction(transaction.id, parsedAmount, category.id, date, trimmedNote === "" ? null : trimmedNote);
       onClose();
     },
     [
@@ -73,6 +94,7 @@ export default function EditTransactionModal({
       parsedAmount,
       transaction,
       date,
+      note,
       onEditTransaction,
       onClose,
     ],
@@ -116,12 +138,21 @@ export default function EditTransactionModal({
                   <TextInput
                     value={amount}
                     onChangeText={setAmount}
+                    onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
                     placeholder="0.00"
                     placeholderTextColor="#475569"
                     keyboardType="decimal-pad"
                     className="text-slate-100 text-5xl font-extrabold text-center w-full h-20 py-0 leading-[60px]"
                   />
+                  {/* Live Preview */}
+                  {showPreview && (
+                    <Text className="text-emerald-400 text-lg font-bold mt-1">
+                      = {parsedAmount !== null ? parsedAmount : "..."}
+                    </Text>
+                  )}
                 </View>
+
+                <OperatorBar onPressOperator={handleOperatorPress} />
 
                 {/* Date Picker */}
                 <CustomDatePicker date={date} onChange={setDate} />
@@ -148,7 +179,7 @@ export default function EditTransactionModal({
             )}
 
             {/* STEP 2 — Category Selector */}
-            {modalStep === 2 && transaction && (
+            {modalStep === 2 && transaction && parsedAmount !== null && (
               <CategoryStep
                 categories={categories}
                 parsedAmount={parsedAmount}
@@ -159,6 +190,8 @@ export default function EditTransactionModal({
                 }}
                 onUpdateCategory={onUpdateCategory}
                 onDeleteCategory={onDeleteCategory}
+                note={note}
+                onNoteChange={setNote}
               />
             )}
           </Pressable>

@@ -35,6 +35,14 @@ export default function TransactionItem({
         <Text className="text-slate-100 font-semibold text-sm">
           {transaction.category}
         </Text>
+        {transaction.notes && (
+          <Text
+            className="text-slate-400 text-xs mt-0.5 italic"
+            numberOfLines={1}
+          >
+            📝 {transaction.notes}
+          </Text>
+        )}
         <Text className="text-slate-500 text-xs mt-0.5">
           {formatDate(transaction.date)}
         </Text>

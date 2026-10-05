@@ -22,6 +22,7 @@ export interface MappedTransaction {
   type: "spent" | "income";
   amount: number;
   date: Date;
+  notes: string | null;
 }
 
 export interface UserPreference {

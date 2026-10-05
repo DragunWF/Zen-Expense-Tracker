@@ -6,6 +6,7 @@ import { formatAmount } from "../../../core/helpers";
 import CategoryPill from "./CategoryPill";
 import CategoryCreatorForm from "./CategoryCreatorForm";
 import IconPickerOverlay from "./IconPickerOverlay";
+import QuickNoteTrigger from "./QuickNoteTrigger";
 
 interface CategoryStepProps {
   categories: Category[];
@@ -15,6 +16,8 @@ interface CategoryStepProps {
   onAddCategory: (name: string, icon: string) => Promise<void>;
   onUpdateCategory: (id: number, name: string, icon: string) => Promise<void>;
   onDeleteCategory: (id: number) => Promise<void>;
+  note: string;
+  onNoteChange: (note: string) => void;
 }
 
 export default function CategoryStep({
@@ -25,6 +28,8 @@ export default function CategoryStep({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
+  note,
+  onNoteChange,
 }: CategoryStepProps) {
   // Category inline creation & edit states
   const [showNewCatInput, setShowNewCatInput] = useState<boolean>(false);
@@ -110,6 +115,10 @@ export default function CategoryStep({
             {isEditMode ? "Done" : "Edit"}
           </Text>
         </Pressable>
+      </View>
+
+      <View className="mb-4 z-10">
+        <QuickNoteTrigger note={note} onNoteChange={onNoteChange} />
       </View>
 
       {/* Category Grid */}
