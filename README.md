@@ -85,6 +85,16 @@ Follow these steps to run the application on your local machine and physical dev
 
 ## Expo Deployment
 
+### Deploy to Production
+
 ```sh
 eas update --branch production
+```
+
+### Upgrade Expo SDK Version
+
+Use this if the app fails to build or run due to API changes from Expo.
+
+```sh
+npm install expo@latest
 ```
