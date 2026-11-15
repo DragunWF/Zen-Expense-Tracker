@@ -5,9 +5,10 @@ import {
   useCallback,
 } from "react";
 import { ExpenseRepository } from "../models/ExpenseRepository";
+import { MappedTransaction } from "../models/types";
 import { useExpense } from "./useExpenseController";
 
-// ── Filter Types ──────────────────────────────────────────────────────────────
+// ── Filter & List Types ───────────────────────────────────────────────────────
 
 export type LedgerDateFilter =
   | "today"
@@ -18,7 +19,102 @@ export type LedgerDateFilter =
 
 export type LedgerTypeFilter = "all" | "spent" | "income";
 
+export interface LedgerDateHeaderItem {
+  type: "header";
+  key: string;
+  label: string;
+  totalIncome: number;
+  totalExpenses: number;
+}
+
+export interface LedgerTransactionRowItem {
+  type: "row";
+  transaction: MappedTransaction;
+}
+
+export type LedgerListItem = LedgerDateHeaderItem | LedgerTransactionRowItem;
+
 const PAGE_SIZE = 15;
+
+// ── Date & Grouping Helpers ───────────────────────────────────────────────────
+
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getDateLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 86400000);
+  const txDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (txDay.getTime() === today.getTime()) return "TODAY";
+  if (txDay.getTime() === yesterday.getTime()) return "YESTERDAY";
+  return date
+    .toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
+    .toUpperCase();
+}
+
+export function buildDailyTotalsMap(
+  transactions: MappedTransaction[],
+): Record<string, { totalIncome: number; totalExpenses: number }> {
+  const totals: Record<string, { totalIncome: number; totalExpenses: number }> =
+    {};
+
+  for (const tx of transactions) {
+    const key = toDateKey(tx.date);
+    if (!totals[key]) {
+      totals[key] = { totalIncome: 0, totalExpenses: 0 };
+    }
+    if (tx.type === "income") {
+      totals[key].totalIncome += tx.amount;
+    } else {
+      totals[key].totalExpenses += tx.amount;
+    }
+  }
+
+  return totals;
+}
+
+export function buildLedgerListItems(
+  visibleTransactions: MappedTransaction[],
+  dailyTotalsByDate: Record<
+    string,
+    { totalIncome: number; totalExpenses: number }
+  >,
+): LedgerListItem[] {
+  const items: LedgerListItem[] = [];
+  let lastDateKey = "";
+
+  for (const tx of visibleTransactions) {
+    const dateKey = toDateKey(tx.date);
+    if (dateKey !== lastDateKey) {
+      const dayTotals = dailyTotalsByDate[dateKey] ?? {
+        totalIncome: 0,
+        totalExpenses: 0,
+      };
+      items.push({
+        type: "header",
+        key: `header-${dateKey}-${items.length}`,
+        label: getDateLabel(tx.date),
+        totalIncome: dayTotals.totalIncome,
+        totalExpenses: dayTotals.totalExpenses,
+      });
+      lastDateKey = dateKey;
+    }
+    items.push({ type: "row", transaction: tx });
+  }
+
+  return items;
+}
 
 // ── Helper: date range resolver ───────────────────────────────────────────────
 
@@ -145,6 +241,18 @@ export function useLedgerController() {
     [filteredTransactions, pageLimit],
   );
 
+  // Compute daily totals from the full filtered set so pagination boundaries
+  // never produce partial daily totals on visible headers.
+  const dailyTotalsByDate = useMemo(
+    () => buildDailyTotalsMap(filteredTransactions),
+    [filteredTransactions],
+  );
+
+  const ledgerListItems = useMemo<LedgerListItem[]>(
+    () => buildLedgerListItems(visibleTransactions, dailyTotalsByDate),
+    [visibleTransactions, dailyTotalsByDate],
+  );
+
   const totalCount = filteredTransactions.length;
   const visibleCount = visibleTransactions.length;
   const hasMore = visibleCount < totalCount;
@@ -188,6 +296,7 @@ export function useLedgerController() {
     // Data
     allCategories,
     visibleTransactions,
+    ledgerListItems,
     loading,
     error,
 

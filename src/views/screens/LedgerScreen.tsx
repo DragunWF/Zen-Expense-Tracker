@@ -1,16 +1,18 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, Pressable, FlatList, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import {
   useLedgerController,
   LedgerTypeFilter,
+  LedgerListItem,
 } from "../../controllers/useLedgerController";
 import { MappedTransaction } from "../../models/types";
 import { useExpense } from "../../controllers/useExpenseController";
 import LedgerHeader from "../components/ledger/LedgerHeader";
 import LedgerDateFilterDropdown from "../components/ledger/LedgerDateFilterDropdown";
 import LedgerStatsCard from "../components/ledger/LedgerStatsCard";
+import LedgerDayHeader from "../components/ledger/LedgerDayHeader";
 import CategoryFilterSheet from "../components/ledger/CategoryFilterSheet";
 import TransactionItem from "../components/ui/TransactionItem";
 import EditTransactionModal from "../components/transactionModal/EditTransactionModal";
@@ -23,38 +25,12 @@ const TYPE_TABS: { value: LedgerTypeFilter; label: string }[] = [
   { value: "income", label: "Income" },
 ];
 
-// ── Date grouping helpers ─────────────────────────────────────────────────────
-
-function getDateLabel(date: Date): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-  const txDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-  if (txDay.getTime() === today.getTime()) return "TODAY";
-  if (txDay.getTime() === yesterday.getTime()) return "YESTERDAY";
-  return date
-    .toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-    .toUpperCase();
-}
-
-// ── FlatList item types ───────────────────────────────────────────────────────
-
-type DateHeader = { type: "header"; label: string; key: string };
-type TransactionRow = { type: "row"; transaction: MappedTransaction };
-type ListItem = DateHeader | TransactionRow;
-
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function LedgerScreen() {
   const {
     allCategories,
-    visibleTransactions,
+    ledgerListItems,
     loading,
     searchQuery,
     setSearchQuery,
@@ -89,22 +65,6 @@ export default function LedgerScreen() {
   const [editingTransaction, setEditingTransaction] =
     useState<MappedTransaction | null>(null);
 
-  // ── Build grouped FlatList data ───────────────────────────────────────────
-  const flatListData = useMemo<ListItem[]>(() => {
-    const items: ListItem[] = [];
-    let lastLabel = "";
-
-    for (const tx of visibleTransactions) {
-      const label = getDateLabel(tx.date);
-      if (label !== lastLabel) {
-        items.push({ type: "header", label, key: `header-${label}` });
-        lastLabel = label;
-      }
-      items.push({ type: "row", transaction: tx });
-    }
-    return items;
-  }, [visibleTransactions]);
-
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleDeleteTransaction = useCallback(
     (id: string) => {
@@ -129,19 +89,19 @@ export default function LedgerScreen() {
   }, []);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: ListItem; index: number }) => {
+    ({ item, index }: { item: LedgerListItem; index: number }) => {
       if (item.type === "header") {
         return (
-          <View className="px-5 pt-5 pb-1.5">
-            <Text className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">
-              {item.label}
-            </Text>
-          </View>
+          <LedgerDayHeader
+            label={item.label}
+            totalIncome={item.totalIncome}
+            totalExpenses={item.totalExpenses}
+          />
         );
       }
 
       // Find the next item to know if this is the last in its group
-      const nextItem = flatListData[index + 1];
+      const nextItem = ledgerListItems[index + 1];
       const isLast = !nextItem || nextItem.type === "header";
 
       return (
@@ -155,10 +115,10 @@ export default function LedgerScreen() {
         </View>
       );
     },
-    [flatListData, handleDeleteTransaction],
+    [ledgerListItems, handleDeleteTransaction, handleEditTransaction],
   );
 
-  const keyExtractor = useCallback((item: ListItem, index: number) => {
+  const keyExtractor = useCallback((item: LedgerListItem, index: number) => {
     if (item.type === "header") return item.key;
     return `tx-${item.transaction.id}-${index}`;
   }, []);
@@ -288,13 +248,13 @@ export default function LedgerScreen() {
       {/* Grouped transaction FlatList */}
       <View className="flex-1">
         <FlatList
-          data={flatListData}
+          data={ledgerListItems}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListFooterComponent={ListFooter}
           ListEmptyComponent={ListEmpty}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerClassName="pb-[120px]"
           // Group borders: we close the rounded container per date group
           getItemLayout={undefined}
           removeClippedSubviews
