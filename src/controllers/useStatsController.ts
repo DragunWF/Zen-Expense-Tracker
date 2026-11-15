@@ -34,9 +34,14 @@ export interface DonutSegment {
   emoji: string;
   amount: number;
   percentage: number;
-  // SVG circle stroke-dasharray values
-  strokeDasharray: string;
-  strokeDashoffset: number;
+  // Angular bounds in degrees [0, 360) clockwise from 12 o'clock
+  startAngle: number;
+  endAngle: number;
+  // Precomputed SVG annular sector paths
+  arcPath: string;
+  selectedArcPath: string;
+  hitArcPath: string;
+  isFullCircle: boolean;
   color: string;
   isOthers?: boolean;
   subCategories?: DonutSubCategory[];
@@ -81,8 +86,90 @@ const OTHERS_EMOJI = "📦";
 
 // ── Donut geometry ─────────────────────────────────────────────────────────────
 
-const DONUT_RADIUS = 54;
+export const DONUT_SIZE = 148;
+export const DONUT_CENTER = DONUT_SIZE / 2;
+export const DONUT_RADIUS = 54;
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+const DONUT_INNER_RADIUS = 44;
+const DONUT_OUTER_RADIUS = 64;
+const DONUT_SELECTED_INNER_RADIUS = 41;
+const DONUT_SELECTED_OUTER_RADIUS = 67;
+const DONUT_HIT_INNER_RADIUS = 36;
+const DONUT_HIT_OUTER_RADIUS = 72;
+
+function polarToCartesian(
+  cx: number,
+  cy: number,
+  radius: number,
+  angleInDegrees: number,
+): { x: number; y: number } {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180;
+  return {
+    x: cx + radius * Math.cos(angleInRadians),
+    y: cy + radius * Math.sin(angleInRadians),
+  };
+}
+
+function buildAnnularSectorPath(
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number,
+): string {
+  const sweep = endAngle - startAngle;
+  if (sweep <= 0) return "";
+  // Clamp near-360° arcs so SVG arc endpoints remain distinct
+  const clampedEnd = sweep >= 359.999 ? startAngle + 359.99 : endAngle;
+  const largeArcFlag = clampedEnd - startAngle > 180 ? 1 : 0;
+
+  const outerStart = polarToCartesian(cx, cy, outerRadius, startAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerRadius, clampedEnd);
+  const innerEnd = polarToCartesian(cx, cy, innerRadius, clampedEnd);
+  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+
+  return [
+    `M ${outerStart.x.toFixed(3)} ${outerStart.y.toFixed(3)}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${outerEnd.x.toFixed(3)} ${outerEnd.y.toFixed(3)}`,
+    `L ${innerEnd.x.toFixed(3)} ${innerEnd.y.toFixed(3)}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x.toFixed(3)} ${innerStart.y.toFixed(3)}`,
+    "Z",
+  ].join(" ");
+}
+
+export function findDonutSegmentIndexAtPoint(
+  segments: DonutSegment[],
+  x: number,
+  y: number,
+  center: number = DONUT_CENTER,
+  innerRadius: number = DONUT_HIT_INNER_RADIUS,
+  outerRadius: number = DONUT_HIT_OUTER_RADIUS,
+): number {
+  if (segments.length === 0) return -1;
+
+  const dx = x - center;
+  const dy = y - center;
+  const distance = Math.hypot(dx, dy);
+  if (distance < innerRadius || distance > outerRadius) return -1;
+
+  const angleFromRight = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const angleClockwiseFromTop = (angleFromRight + 90 + 360) % 360;
+
+  for (let i = 0; i < segments.length; i += 1) {
+    const seg = segments[i];
+    const isLast = i === segments.length - 1;
+    if (
+      angleClockwiseFromTop >= seg.startAngle &&
+      (isLast
+        ? angleClockwiseFromTop <= seg.endAngle
+        : angleClockwiseFromTop < seg.endAngle)
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -182,22 +269,56 @@ export function buildDonutSegments(
   const palette =
     donutType === "income" ? INCOME_SEGMENT_COLORS : SEGMENT_COLORS;
 
-  // Build SVG donut segments via stroke-dashoffset
-  let cumulativeOffset = 0; // starts at top (-90° rotation handled via SVG transform)
+  // Build bounded SVG annular-sector paths and angular ranges starting at 12 o'clock (0°)
+  let cumulativeAngle = 0;
   return slices.map((slice, i) => {
     const percentage = (slice.amount / total) * 100;
-    const dash = (percentage / 100) * DONUT_CIRCUMFERENCE;
-    const gap = DONUT_CIRCUMFERENCE - dash;
-    const strokeDashoffset = DONUT_CIRCUMFERENCE - cumulativeOffset;
-    cumulativeOffset += dash;
+    const sweep = (percentage / 100) * 360;
+    const startAngle = cumulativeAngle;
+    const isLast = i === slices.length - 1;
+    const endAngle = isLast ? 360 : cumulativeAngle + sweep;
+    cumulativeAngle = endAngle;
+
+    const isFullCircle = slices.length === 1 || endAngle - startAngle >= 359.999;
 
     return {
       category: slice.category,
       emoji: slice.emoji,
       amount: slice.amount,
       percentage,
-      strokeDasharray: `${dash} ${gap}`,
-      strokeDashoffset,
+      startAngle,
+      endAngle,
+      arcPath: isFullCircle
+        ? ""
+        : buildAnnularSectorPath(
+            DONUT_CENTER,
+            DONUT_CENTER,
+            DONUT_INNER_RADIUS,
+            DONUT_OUTER_RADIUS,
+            startAngle,
+            endAngle,
+          ),
+      selectedArcPath: isFullCircle
+        ? ""
+        : buildAnnularSectorPath(
+            DONUT_CENTER,
+            DONUT_CENTER,
+            DONUT_SELECTED_INNER_RADIUS,
+            DONUT_SELECTED_OUTER_RADIUS,
+            startAngle,
+            endAngle,
+          ),
+      hitArcPath: isFullCircle
+        ? ""
+        : buildAnnularSectorPath(
+            DONUT_CENTER,
+            DONUT_CENTER,
+            DONUT_HIT_INNER_RADIUS,
+            DONUT_HIT_OUTER_RADIUS,
+            startAngle,
+            endAngle,
+          ),
+      isFullCircle,
       color: slice.isOthers
         ? OTHERS_SEGMENT_COLOR
         : palette[i % palette.length],

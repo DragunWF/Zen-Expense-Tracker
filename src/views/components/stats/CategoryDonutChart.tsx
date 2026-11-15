@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
-import Svg, { Circle, G } from "react-native-svg";
+import Svg, { Circle, G, Path } from "react-native-svg";
 import {
+  DONUT_CENTER,
+  DONUT_RADIUS,
+  DONUT_SIZE,
   DonutCategoryLimit,
   DonutFilterCategoryOption,
   DonutSegment,
@@ -29,10 +32,6 @@ interface CategoryDonutChartProps {
   onClearExcluded: () => void;
   onResetFilters: () => void;
 }
-
-const DONUT_RADIUS = 54;
-const DONUT_SIZE = 148; // viewBox width/height
-const CENTER = DONUT_SIZE / 2;
 
 export default function CategoryDonutChart({
   segments,
@@ -107,39 +106,71 @@ export default function CategoryDonutChart({
               >
                 {/* Background track */}
                 <Circle
-                  cx={CENTER}
-                  cy={CENTER}
+                  cx={DONUT_CENTER}
+                  cy={DONUT_CENTER}
                   r={DONUT_RADIUS}
                   fill="transparent"
                   stroke="#1e293b"
                   strokeWidth={22}
                 />
-                {/* Rotate so segments start from top (-90°) */}
-                <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
-                  {segments.map((seg, i) => {
-                    const isSelected = i === selectedIndex;
+
+                {/* Bounded clickable slices */}
+                {segments.map((seg, i) => {
+                  const isSelected = i === selectedIndex;
+                  const opacity = selectedIndex === -1 || isSelected ? 1 : 0.35;
+
+                  if (seg.isFullCircle) {
                     return (
                       <Circle
                         key={seg.category}
-                        cx={CENTER}
-                        cy={CENTER}
+                        cx={DONUT_CENTER}
+                        cy={DONUT_CENTER}
                         r={DONUT_RADIUS}
                         fill="transparent"
                         stroke={seg.color}
                         strokeWidth={isSelected ? 26 : 20}
-                        strokeDasharray={seg.strokeDasharray}
-                        strokeDashoffset={seg.strokeDashoffset}
-                        opacity={selectedIndex === -1 || isSelected ? 1 : 0.35}
+                        opacity={opacity}
                         onPress={() => onSelectSegment(i)}
                       />
                     );
-                  })}
-                </G>
+                  }
+
+                  const isThinSlice = seg.endAngle - seg.startAngle < 10;
+
+                  return (
+                    <G key={seg.category}>
+                      <Path
+                        d={isSelected ? seg.selectedArcPath : seg.arcPath}
+                        fill={seg.color}
+                        opacity={opacity}
+                        onPress={() => onSelectSegment(i)}
+                      />
+                      <Path
+                        d={seg.hitArcPath}
+                        fill="rgba(0,0,0,0.001)"
+                        stroke={isThinSlice ? "rgba(0,0,0,0.001)" : "none"}
+                        strokeWidth={isThinSlice ? 6 : 0}
+                        onPress={() => onSelectSegment(i)}
+                      />
+                    </G>
+                  );
+                })}
               </Svg>
 
-              {/* Center label overlay */}
-              <View className="absolute inset-0 items-center justify-center pointer-events-none">
-                <View className="w-[72px] items-center justify-center">
+              {/* Center label overlay (tap to clear active selection) */}
+              <View
+                pointerEvents="box-none"
+                className="absolute inset-0 items-center justify-center"
+              >
+                <Pressable
+                  disabled={selectedIndex === -1}
+                  onPress={() => {
+                    if (selectedIndex !== -1) {
+                      onSelectSegment(selectedIndex);
+                    }
+                  }}
+                  className="w-[68px] h-[68px] rounded-full items-center justify-center active:bg-slate-800/40"
+                >
                   {selectedSeg ? (
                     <>
                       <Text
@@ -166,7 +197,7 @@ export default function CategoryDonutChart({
                       </Text>
                     </>
                   )}
-                </View>
+                </Pressable>
               </View>
             </View>
 
