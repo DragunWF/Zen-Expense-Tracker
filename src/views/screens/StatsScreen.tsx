@@ -18,6 +18,17 @@ export default function StatsScreen() {
     donutSegments,
     selectedDonutIndex,
     setSelectedDonutIndex,
+    donutLimit,
+    setDonutLimit,
+    donutType,
+    setDonutType,
+    availableDonutCategories,
+    excludedCategories,
+    toggleExcludeCategory,
+    clearExcludedCategories,
+    resetDonutFilters,
+    donutFilteredTotal,
+    donutHasTransactionsForType,
     trendPoints,
     windowTotalIncome,
     windowTotalExpenses,
@@ -82,7 +93,17 @@ export default function StatsScreen() {
           segments={donutSegments}
           selectedIndex={selectedDonutIndex}
           onSelectSegment={setSelectedDonutIndex}
-          totalExpenses={windowTotalExpenses}
+          filteredTotal={donutFilteredTotal}
+          hasTransactionsForType={donutHasTransactionsForType}
+          donutLimit={donutLimit}
+          onSelectLimit={setDonutLimit}
+          donutType={donutType}
+          onSelectType={setDonutType}
+          availableCategories={availableDonutCategories}
+          excludedCategories={excludedCategories}
+          onToggleExclude={toggleExcludeCategory}
+          onClearExcluded={clearExcludedCategories}
+          onResetFilters={resetDonutFilters}
         />
 
         {/* Section 3: Cash flow trend chart */}

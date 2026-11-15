@@ -1,12 +1,12 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useExpense } from "./useExpenseController";
 import { MappedTransaction } from "../models/types";
-import { APP_CONFIG } from "../core/constants";
-import { formatAmount } from "../core/helpers";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type StatsTimeframe = "30_days" | "90_days" | "ytd";
+export type DonutCategoryLimit = 3 | 5 | "all";
+export type DonutTransactionType = "spent" | "income";
 
 export interface HeatmapDay {
   date: Date;
@@ -14,6 +14,19 @@ export interface HeatmapDay {
   count: number;
   total: number;
   level: 0 | 1 | 2 | 3 | 4; // 0=empty, 4=highest activity
+}
+
+export interface DonutSubCategory {
+  category: string;
+  emoji: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface DonutFilterCategoryOption {
+  category: string;
+  emoji: string;
+  amount: number;
 }
 
 export interface DonutSegment {
@@ -25,6 +38,8 @@ export interface DonutSegment {
   strokeDasharray: string;
   strokeDashoffset: number;
   color: string;
+  isOthers?: boolean;
+  subCategories?: DonutSubCategory[];
 }
 
 export interface TrendPoint {
@@ -37,7 +52,8 @@ export interface TrendPoint {
   yExpensesNorm: number;
 }
 
-// ── Segment color palette (emerald excluded — reserved for income) ─────────────
+// ── Segment color palettes ────────────────────────────────────────────────────
+// Emerald excluded from expense palette (reserved for income)
 const SEGMENT_COLORS = [
   "#f43f5e", // rose-500
   "#a855f7", // purple-500
@@ -48,6 +64,20 @@ const SEGMENT_COLORS = [
   "#f97316", // orange-500
   "#6366f1", // indigo-500
 ];
+
+const INCOME_SEGMENT_COLORS = [
+  "#10b981", // emerald-500
+  "#14b8a6", // teal-500
+  "#06b6d4", // cyan-500
+  "#3b82f6", // blue-500
+  "#84cc16", // lime-500
+  "#a855f7", // purple-500
+  "#f59e0b", // amber-500
+  "#6366f1", // indigo-500
+];
+
+const OTHERS_SEGMENT_COLOR = "#64748b"; // slate-500
+const OTHERS_EMOJI = "📦";
 
 // ── Donut geometry ─────────────────────────────────────────────────────────────
 
@@ -73,14 +103,124 @@ function subtractDays(date: Date, days: number): Date {
   return d;
 }
 
+// ── Donut aggregation helpers ─────────────────────────────────────────────────
+
+export function groupTransactionsByCategory(
+  txs: MappedTransaction[],
+): DonutFilterCategoryOption[] {
+  const grouped: Record<string, { amount: number; emoji: string }> = {};
+  for (const tx of txs) {
+    if (!grouped[tx.category]) {
+      grouped[tx.category] = { amount: 0, emoji: tx.emoji };
+    }
+    grouped[tx.category].amount += tx.amount;
+  }
+
+  return Object.entries(grouped)
+    .sort((a, b) => b[1].amount - a[1].amount)
+    .map(([category, { amount, emoji }]) => ({
+      category,
+      emoji,
+      amount,
+    }));
+}
+
+export function buildDonutSegments(
+  txs: MappedTransaction[],
+  donutLimit: DonutCategoryLimit,
+  donutType: DonutTransactionType,
+): DonutSegment[] {
+  const sorted = groupTransactionsByCategory(txs);
+  const total = sorted.reduce((sum, item) => sum + item.amount, 0);
+  if (total === 0) return [];
+
+  // Roll remaining categories into "Others" only when 2+ categories remain beyond the limit
+  const shouldGroupOthers =
+    donutLimit !== "all" &&
+    sorted.length > donutLimit &&
+    sorted.length - donutLimit >= 2;
+
+  type RawSlice = {
+    category: string;
+    emoji: string;
+    amount: number;
+    isOthers?: boolean;
+    subCategories?: DonutSubCategory[];
+  };
+
+  const slices: RawSlice[] = [];
+  if (shouldGroupOthers) {
+    const topEntries = sorted.slice(0, donutLimit);
+    const otherEntries = sorted.slice(donutLimit);
+
+    for (const item of topEntries) {
+      slices.push(item);
+    }
+
+    const othersAmount = otherEntries.reduce(
+      (sum, item) => sum + item.amount,
+      0,
+    );
+    const subCategories: DonutSubCategory[] = otherEntries.map((item) => ({
+      category: item.category,
+      emoji: item.emoji,
+      amount: item.amount,
+      percentage: (item.amount / total) * 100,
+    }));
+
+    slices.push({
+      category: "Others",
+      emoji: OTHERS_EMOJI,
+      amount: othersAmount,
+      isOthers: true,
+      subCategories,
+    });
+  } else {
+    slices.push(...sorted);
+  }
+
+  const palette =
+    donutType === "income" ? INCOME_SEGMENT_COLORS : SEGMENT_COLORS;
+
+  // Build SVG donut segments via stroke-dashoffset
+  let cumulativeOffset = 0; // starts at top (-90° rotation handled via SVG transform)
+  return slices.map((slice, i) => {
+    const percentage = (slice.amount / total) * 100;
+    const dash = (percentage / 100) * DONUT_CIRCUMFERENCE;
+    const gap = DONUT_CIRCUMFERENCE - dash;
+    const strokeDashoffset = DONUT_CIRCUMFERENCE - cumulativeOffset;
+    cumulativeOffset += dash;
+
+    return {
+      category: slice.category,
+      emoji: slice.emoji,
+      amount: slice.amount,
+      percentage,
+      strokeDasharray: `${dash} ${gap}`,
+      strokeDashoffset,
+      color: slice.isOthers
+        ? OTHERS_SEGMENT_COLOR
+        : palette[i % palette.length],
+      isOthers: slice.isOthers,
+      subCategories: slice.subCategories,
+    };
+  });
+}
+
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useStatsController() {
-  const { transactions, categories } = useExpense();
+  const { transactions } = useExpense();
 
-  const [timeframe, setTimeframe] = useState<StatsTimeframe>("30_days");
+  const [timeframe, setTimeframeState] = useState<StatsTimeframe>("30_days");
+  const [donutLimit, setDonutLimitState] = useState<DonutCategoryLimit>(5);
+  const [donutType, setDonutTypeState] =
+    useState<DonutTransactionType>("spent");
+  const [excludedCategories, setExcludedCategories] = useState<string[]>([]);
   const [selectedDonutIndex, setSelectedDonutIndex] = useState<number>(0);
-  const [selectedTrendIndex, setSelectedTrendIndex] = useState<number | null>(null);
+  const [selectedTrendIndex, setSelectedTrendIndex] = useState<number | null>(
+    null,
+  );
 
   // ── Timeframe window ───────────────────────────────────────────────────────
   const windowStart = useMemo<Date>(() => {
@@ -129,7 +269,8 @@ export function useStatsController() {
       const data = map[key] ?? { count: 0, total: 0 };
       const ratio = maxCount > 0 ? data.count / maxCount : 0;
       let level: 0 | 1 | 2 | 3 | 4 = 0;
-      if (ratio > 0) level = ratio <= 0.25 ? 1 : ratio <= 0.5 ? 2 : ratio <= 0.75 ? 3 : 4;
+      if (ratio > 0)
+        level = ratio <= 0.25 ? 1 : ratio <= 0.5 ? 2 : ratio <= 0.75 ? 3 : 4;
 
       days.push({
         date: new Date(cursor),
@@ -143,44 +284,107 @@ export function useStatsController() {
     return days;
   }, [transactions]);
 
-  // ── Donut segments: expense breakdown by category ──────────────────────────
-  const donutSegments = useMemo<DonutSegment[]>(() => {
-    const expenseTxs = windowTransactions.filter((tx) => tx.type === "spent");
-    const totalSpent = expenseTxs.reduce((s, tx) => s + tx.amount, 0);
-    if (totalSpent === 0) return [];
+  // ── Donut source transactions & category options (before exclusions) ───────
+  const windowTypeTransactions = useMemo<MappedTransaction[]>(
+    () => windowTransactions.filter((tx) => tx.type === donutType),
+    [windowTransactions, donutType],
+  );
 
-    // Group by category
-    const grouped: Record<string, { amount: number; emoji: string }> = {};
-    for (const tx of expenseTxs) {
-      if (!grouped[tx.category]) {
-        grouped[tx.category] = { amount: 0, emoji: tx.emoji };
-      }
-      grouped[tx.category].amount += tx.amount;
-    }
+  const donutUnfilteredTotal = useMemo<number>(
+    () => windowTypeTransactions.reduce((s, tx) => s + tx.amount, 0),
+    [windowTypeTransactions],
+  );
 
-    // Sort descending
-    const sorted = Object.entries(grouped).sort((a, b) => b[1].amount - a[1].amount);
+  const availableDonutCategories = useMemo<DonutFilterCategoryOption[]>(
+    () => groupTransactionsByCategory(windowTypeTransactions),
+    [windowTypeTransactions],
+  );
 
-    // Build SVG donut segments via stroke-dashoffset
-    let cumulativeOffset = 0; // starts at top (90° rotation handled via SVG transform)
-    return sorted.map(([category, { amount, emoji }], i) => {
-      const percentage = (amount / totalSpent) * 100;
-      const dash = (percentage / 100) * DONUT_CIRCUMFERENCE;
-      const gap = DONUT_CIRCUMFERENCE - dash;
-      const strokeDashoffset = DONUT_CIRCUMFERENCE - cumulativeOffset;
-      cumulativeOffset += dash;
+  const activeExcludedCategories = useMemo<string[]>(() => {
+    const availableSet = new Set(
+      availableDonutCategories.map((c) => c.category),
+    );
+    return excludedCategories.filter((c) => availableSet.has(c));
+  }, [availableDonutCategories, excludedCategories]);
 
-      return {
-        category,
-        emoji,
-        amount,
-        percentage,
-        strokeDasharray: `${dash} ${gap}`,
-        strokeDashoffset,
-        color: SEGMENT_COLORS[i % SEGMENT_COLORS.length],
-      };
-    });
-  }, [windowTransactions]);
+  // ── Donut filtered total & segments (Top-N grouping + "Others") ────────────
+  const filteredDonutTransactions = useMemo<MappedTransaction[]>(() => {
+    if (activeExcludedCategories.length === 0) return windowTypeTransactions;
+    const excludedSet = new Set(activeExcludedCategories);
+    return windowTypeTransactions.filter((tx) => !excludedSet.has(tx.category));
+  }, [windowTypeTransactions, activeExcludedCategories]);
+
+  const donutFilteredTotal = useMemo<number>(
+    () => filteredDonutTransactions.reduce((s, tx) => s + tx.amount, 0),
+    [filteredDonutTransactions],
+  );
+
+  const donutSegments = useMemo<DonutSegment[]>(
+    () => buildDonutSegments(filteredDonutTransactions, donutLimit, donutType),
+    [filteredDonutTransactions, donutLimit, donutType],
+  );
+
+  // ── Filter & selection handlers ────────────────────────────────────────────
+  const setTimeframe = useCallback((nextTimeframe: StatsTimeframe) => {
+    setTimeframeState(nextTimeframe);
+    setSelectedDonutIndex(0);
+  }, []);
+
+  const setDonutLimit = useCallback((nextLimit: DonutCategoryLimit) => {
+    setDonutLimitState(nextLimit);
+    setSelectedDonutIndex(0);
+  }, []);
+
+  const setDonutType = useCallback((nextType: DonutTransactionType) => {
+    setDonutTypeState(nextType);
+    setExcludedCategories([]);
+    setSelectedDonutIndex(0);
+  }, []);
+
+  const toggleExcludeCategory = useCallback((category: string) => {
+    setExcludedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
+    );
+    setSelectedDonutIndex(0);
+  }, []);
+
+  const clearExcludedCategories = useCallback(() => {
+    setExcludedCategories([]);
+    setSelectedDonutIndex(0);
+  }, []);
+
+  const resetDonutFilters = useCallback(() => {
+    setDonutLimitState(5);
+    setExcludedCategories([]);
+    setSelectedDonutIndex(0);
+  }, []);
+
+  // Clamp selection so index never points out-of-bounds after filter/data changes
+  const safeSelectedDonutIndex = useMemo<number>(() => {
+    if (donutSegments.length === 0) return -1;
+    if (selectedDonutIndex === -1) return -1;
+    if (selectedDonutIndex < 0 || selectedDonutIndex >= donutSegments.length)
+      return 0;
+    return selectedDonutIndex;
+  }, [donutSegments.length, selectedDonutIndex]);
+
+  const handleSelectDonutSegment = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= donutSegments.length) return;
+      setSelectedDonutIndex((prev) => {
+        const currentSafe =
+          prev === -1
+            ? -1
+            : prev < 0 || prev >= donutSegments.length
+              ? 0
+              : prev;
+        return currentSafe === index ? -1 : index;
+      });
+    },
+    [donutSegments.length],
+  );
 
   // ── Cash flow trend intervals ──────────────────────────────────────────────
   const trendPoints = useMemo<TrendPoint[]>(() => {
@@ -204,14 +408,28 @@ export function useStatsController() {
         intervals.push({
           label: `Wk ${4 - w}`,
           start,
-          end: new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59),
+          end: new Date(
+            end.getFullYear(),
+            end.getMonth(),
+            end.getDate(),
+            23,
+            59,
+            59,
+          ),
         });
       }
     } else if (timeframe === "90_days") {
       // Monthly intervals over last 3 months
       for (let m = 2; m >= 0; m--) {
         const start = new Date(now.getFullYear(), now.getMonth() - m, 1);
-        const end = new Date(now.getFullYear(), now.getMonth() - m + 1, 0, 23, 59, 59);
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth() - m + 1,
+          0,
+          23,
+          59,
+          59,
+        );
         const label = start.toLocaleString("en-US", { month: "short" });
         intervals.push({ label, start, end });
       }
@@ -227,9 +445,15 @@ export function useStatsController() {
 
     // Aggregate per interval
     const raw = intervals.map(({ label, start, end }) => {
-      const txs = transactions.filter((tx) => tx.date >= start && tx.date <= end);
-      const income = txs.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-      const expenses = txs.filter((t) => t.type === "spent").reduce((s, t) => s + t.amount, 0);
+      const txs = transactions.filter(
+        (tx) => tx.date >= start && tx.date <= end,
+      );
+      const income = txs
+        .filter((t) => t.type === "income")
+        .reduce((s, t) => s + t.amount, 0);
+      const expenses = txs
+        .filter((t) => t.type === "spent")
+        .reduce((s, t) => s + t.amount, 0);
       return { label, income, expenses };
     });
 
@@ -247,19 +471,28 @@ export function useStatsController() {
 
   // ── Summary totals for selected window ────────────────────────────────────
   const windowTotalIncome = useMemo(
-    () => windowTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
+    () =>
+      windowTransactions
+        .filter((t) => t.type === "income")
+        .reduce((s, t) => s + t.amount, 0),
     [windowTransactions],
   );
 
   const windowTotalExpenses = useMemo(
-    () => windowTransactions.filter((t) => t.type === "spent").reduce((s, t) => s + t.amount, 0),
+    () =>
+      windowTransactions
+        .filter((t) => t.type === "spent")
+        .reduce((s, t) => s + t.amount, 0),
     [windowTransactions],
   );
 
   const windowNet = windowTotalIncome - windowTotalExpenses;
 
   // ── Derived donut center text ──────────────────────────────────────────────
-  const selectedSegment = donutSegments[selectedDonutIndex] ?? null;
+  const selectedSegment =
+    safeSelectedDonutIndex >= 0
+      ? (donutSegments[safeSelectedDonutIndex] ?? null)
+      : null;
 
   // ── Expose ────────────────────────────────────────────────────────────────
   return {
@@ -267,9 +500,21 @@ export function useStatsController() {
     setTimeframe,
     heatmapDays,
     donutSegments,
-    selectedDonutIndex,
-    setSelectedDonutIndex,
+    selectedDonutIndex: safeSelectedDonutIndex,
+    setSelectedDonutIndex: handleSelectDonutSegment,
     selectedSegment,
+    donutLimit,
+    setDonutLimit,
+    donutType,
+    setDonutType,
+    availableDonutCategories,
+    excludedCategories: activeExcludedCategories,
+    toggleExcludeCategory,
+    clearExcludedCategories,
+    resetDonutFilters,
+    donutFilteredTotal,
+    donutUnfilteredTotal,
+    donutHasTransactionsForType: donutUnfilteredTotal > 0,
     trendPoints,
     selectedTrendIndex,
     setSelectedTrendIndex,

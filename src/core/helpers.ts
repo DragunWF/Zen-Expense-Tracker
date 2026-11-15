@@ -12,3 +12,10 @@ export function formatAmount(value: number): string {
     maximumFractionDigits: 2,
   });
 }
+
+export function formatPercentage(value: number): string {
+  if (value > 0 && Math.round(value) === 0) {
+    return "<1%";
+  }
+  return `${Math.round(value)}%`;
+}
